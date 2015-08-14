@@ -3,24 +3,41 @@
 #include "DDSimulator.h"
 #include "MapTile.h"
 
-UMapTile::UMapTile(const FObjectInitializer & PCIP) : Super(PCIP), RelativePawnLocation(FVector(0, 0, 100))
+AMapTile::AMapTile(const FObjectInitializer & PCIP) : Super(PCIP), Index(FTileIndex()), RelativePawnLocation(FVector(0, 0, 100))
 {
+  PrimaryActorTick.bCanEverTick = true;
   bReplicates = true;
-  Index.SetNumZeroed(2);
+  bAlwaysRelevant = true;
   AssignedEntity.SetNumUninitialized(0);
   OpenTiles.SetNumUninitialized(0);
-  SetStaticMesh(ConstructorHelpers::FObjectFinder<UStaticMesh>(TEXT("StaticMesh'/Game/Meshes/Basic/BasicTile.BasicTile'")).Object);
+  SetRootComponent(CreateDefaultSubobject<USceneComponent>("RootComponent"));
+  Mesh = CreateDefaultSubobject<UStaticMeshComponent>("Mesh");
+  Mesh->AttachTo(RootComponent);
+  Mesh->SetStaticMesh(ConstructorHelpers::FObjectFinder<UStaticMesh>(TEXT("StaticMesh'/Game/Meshes/Basic/BasicTile.BasicTile'")).Object);
 }
 
-void UMapTile::InitTile(int32 i, int32 j) { Index[0] = i; Index[1] = j; }
+FVector AMapTile::EntityPosition() { return GetActorLocation() + RelativePawnLocation; }
 
-FVector UMapTile::EntityPosition() { return GetComponentLocation() + RelativePawnLocation; }
-/*
-void UMapTile::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
+void AMapTile::AssignEntity_Implementation(AMapBasicEntity* ent)
 {
-  DOREPLIFETIME(UMapTile, Index);
-  DOREPLIFETIME(UMapTile, RelativePawnLocation);
-  DOREPLIFETIME(UMapTile, AssignedEntity);
-  DOREPLIFETIME(UMapTile, OpenTiles);
+  if (AssignedEntity.Contains(ent)) {
+    AssignedEntity.Remove(ent);
+  } else {
+    AssignedEntity.Add(ent);
+  }
 }
-*/
+
+bool AMapTile::AssignEntity_Validate(AMapBasicEntity* ent)
+{
+  return true;
+}
+
+void AMapTile::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
+{
+  DOREPLIFETIME(AMapTile, Index);
+  DOREPLIFETIME(AMapTile, RelativePawnLocation);
+  DOREPLIFETIME(AMapTile, AssignedEntity);
+  DOREPLIFETIME(AMapTile, Mesh);
+  DOREPLIFETIME(AMapTile, OpenTiles);
+}
+

@@ -22,32 +22,22 @@ void AMapState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLife
 {
   DOREPLIFETIME(AMapState, Map);
   DOREPLIFETIME(AMapState, MapEntities);
-  //DOREPLIFETIME(AMapState, MapEntityTiles);
 }
 
-TArray<AMapBasicEntity*> AMapState::GetBasicEntityByIndex(TArray<int32> pos)
+TArray<AMapBasicEntity*> AMapState::GetBasicEntityByIndex(const TArray<FTileIndex>& pos)
 {
   TArray<AMapBasicEntity*> ret;
-  if (pos.Num() == 2) {
-     ret.Append(Map->GetTileFromIndex(pos)->AssignedEntity);
-  } else {
-    TArray<int32> t; t.SetNumZeroed(2);
-    for (int32 i = 0; i != pos.Num() / 2; i++) {
-      t[0] = pos[2 * i]; t[1] = pos[2 * i + 1];
-      ret.Append(Map->GetTileFromIndex(t)->AssignedEntity);
-    }
+  for (int32 i = 0; i != pos.Num(); i++) {
+    ret.Append(Map->GetTileFromIndex(pos[i])->AssignedEntity);
   }
   return ret;
 }
 
-/*
-  Check if returned pointer is NULL.
-*/
-AMapBasicEntity* AMapState::GetBasicEntityByUID(int32 uid)
+TArray<AMapBasicEntity*> AMapState::GetBasicEntityByUID(int32 uid)
 {
-  AMapBasicEntity * ret = 0;
+  TArray<AMapBasicEntity*> ret;
   for (auto it = MapEntities.CreateConstIterator(); it; ++it) {
-    if ((*it)->uid == uid) { ret = *it; break; }
+    if ((*it)->uid == uid) { ret.Add(*it); }
   }
   return ret;
 }

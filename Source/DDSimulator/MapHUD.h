@@ -14,4 +14,8 @@ public:
   AMapHUD();
 
   virtual void DrawHUD() override;
+
+  UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintCosmetic, Category = Selection)
+  void UpdateSelection(const TArray<AMapBasicEntity*>& SelectedEntities);
 };
+

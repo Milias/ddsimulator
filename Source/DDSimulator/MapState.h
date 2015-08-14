@@ -18,9 +18,6 @@ public:
 
   UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadOnly, Category = Entity)
   TArray<AMapBasicEntity*> MapEntities;
-
-  UPROPERTY(/*Replicated*/)
-  TMap<int32, UMapTile*> MapEntityTiles;
   
   AMapState(const FObjectInitializer & PCIP);
 
@@ -28,8 +25,11 @@ public:
   virtual void Tick(float dt) override;
 
   UFUNCTION(BlueprintCallable, Category = Entity)
-  TArray<AMapBasicEntity*> GetBasicEntityByIndex(TArray<int32> pos);
+  TArray<AMapBasicEntity*> GetBasicEntityByIndex(const TArray<FTileIndex>& pos);
 
+  /*
+  Check if returned pointer is NULL.
+  */
   UFUNCTION(BlueprintCallable, Category = Entity)
-  AMapBasicEntity* GetBasicEntityByUID(int32 uid);
+  TArray<AMapBasicEntity*> GetBasicEntityByUID(int32 uid);
 };

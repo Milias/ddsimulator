@@ -19,7 +19,7 @@ public:
   float TileHeight;
   
   UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadWrite, Category = Map)
-  TArray<UMapTile*> MapTiles;
+  TArray<AMapTile*> MapTiles;
 
   UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Map)
   USceneComponent * MapComponent;
@@ -28,18 +28,15 @@ public:
 	virtual void BeginPlay() override;
 	virtual void Tick( float DeltaSeconds ) override;
 
-  UFUNCTION(BlueprintCallable, Category = Map)
+  UFUNCTION(Server, WithValidation, Reliable, BlueprintCallable, Category = Map)
   void CreateBasicGridMap(FVector Position, int32 MapWidth, int32 MapHeight);
 
   UFUNCTION(BlueprintCallable, Category = Map)
-  UMapTile * GetTileFromPosition(FVector p);
+  AMapTile * GetTileFromPosition(FVector p);
 
   UFUNCTION(BlueprintCallable, Category = Map)
-  UMapTile * GetTileFromIndex(TArray<int32> ind);
+  TArray<AMapTile*> GetTilesFromIndex(const TArray<FTileIndex>& pos);
 
   UFUNCTION(BlueprintCallable, Category = Map)
-  int32 DistInt(TArray<int32> v1, TArray<int32> v2) { return abs(v1[0] - v2[0]) + abs(v1[1] - v2[1]); }
-
-  UFUNCTION(BlueprintCallable, Category = Map)
-  int32 DistDD(TArray<int32> v1, TArray<int32> v2) { return std::max<int32>(abs(v1[0] - v2[0]), abs(v1[1] - v2[1])); }
+  AMapTile* GetTileFromIndex(const FTileIndex& pos);
 };

@@ -5,31 +5,37 @@
 #include "Components/PrimitiveComponent.h"
 #include "MapBasicEntity.h"
 #include "MapTile.generated.h"
-                           
+
 UCLASS()
-class DDSIMULATOR_API UMapTile : public UStaticMeshComponent
+class DDSIMULATOR_API AMapTile : public AActor
 {
   GENERATED_BODY()
 
 public:
-  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Map)
-  TArray<int32> Index;
+  UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere, Category = Map)
+  FTileIndex Index;
 
-  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Entity)
+  UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = Entity)
+  UStaticMeshComponent * Mesh;
+
+  UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere, Category = Entity)
   FVector RelativePawnLocation;
 
-  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Entity)
+  UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere, Category = Entity)
   TArray<AMapBasicEntity*> AssignedEntity;
 
-  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Map)
-  TArray<UMapTile*> OpenTiles;
+  UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere, Category = Map)
+  TArray<AMapTile*> OpenTiles;
 
-  UMapTile(const FObjectInitializer & PCIP);
-  ~UMapTile() {}
+  AMapTile(const FObjectInitializer & PCIP);
 
-  UFUNCTION(BlueprintCallable, Category = Map)
-  void InitTile(int32 i, int32 j);
-
-  UFUNCTION(BlueprintCallable, Category = Map)
+  UFUNCTION(BlueprintCallable, Category = Entity)
   FVector EntityPosition();
+
+  /*
+    If this tile already contains ent, AssignEntity will remove it.
+    Otherwise, ent will be Add-ed to AssignedEntity.
+  */
+  UFUNCTION(Server, WithValidation, Reliable, BlueprintCallable, Category = Entity)
+  void AssignEntity(AMapBasicEntity* ent);
 };

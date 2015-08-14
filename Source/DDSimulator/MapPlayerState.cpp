@@ -5,7 +5,6 @@
 
 AMapPlayerState::AMapPlayerState(const FObjectInitializer & PCIP) : Super(PCIP)
 {
-  SelectedEntity.SetNumUninitialized(0);
 }
 
 void AMapPlayerState::Tick(float dt)

@@ -12,6 +12,9 @@ class DDSIMULATOR_API AMapPlayerState : public APlayerState
 	GENERATED_BODY()
 
 public:
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Selection)
+  TArray<AMapBasicEntity*> SelectedEntity;
+
   AMapPlayerState(const FObjectInitializer & PCIP);
 
   virtual void Tick(float dt) override;

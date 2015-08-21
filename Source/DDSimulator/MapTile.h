@@ -27,15 +27,29 @@ public:
   UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere, Category = Map)
   TArray<AMapTile*> OpenTiles;
 
+  UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere, Category = Map)
+  int32 Clearance;
+
+  UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere, Category = Map)
+  bool Transitable;
+
   AMapTile(const FObjectInitializer & PCIP);
 
   UFUNCTION(BlueprintCallable, Category = Entity)
   FVector EntityPosition();
 
+  UFUNCTION(BlueprintCallable, Category = Map)
+  bool IsTransitable();
+
   /*
-    If this tile already contains ent, AssignEntity will remove it.
-    Otherwise, ent will be Add-ed to AssignedEntity.
-  */
-  UFUNCTION(Server, WithValidation, Reliable, BlueprintCallable, Category = Entity)
-  void AssignEntity(AMapBasicEntity* ent);
+   * If this tile already contains ent, AssignEntity will remove it.
+   * Otherwise, ent will be Add-ed to AssignedEntity.
+   */
+  UFUNCTION(BlueprintCallable, Category = Entity)
+  void AssignEntity(AMapBasicEntity* Entity);
+
+  UFUNCTION(Server, WithValidation, Reliable)
+  void ServerAssignEntity(AMapBasicEntity* Entity);
+
+  void DoAssignEntity(AMapBasicEntity* Entity);
 };

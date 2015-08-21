@@ -3,7 +3,7 @@
 #include "DDSimulator.h"
 #include "MapTile.h"
 
-AMapTile::AMapTile(const FObjectInitializer & PCIP) : Super(PCIP), Index(FTileIndex()), RelativePawnLocation(FVector(0, 0, 100))
+AMapTile::AMapTile(const FObjectInitializer & PCIP) : Super(PCIP), Index(FTileIndex()), RelativePawnLocation(FVector(0, 0, 100)), Clearance(0), Transitable(true)
 {
   PrimaryActorTick.bCanEverTick = true;
   bReplicates = true;
@@ -14,11 +14,31 @@ AMapTile::AMapTile(const FObjectInitializer & PCIP) : Super(PCIP), Index(FTileIn
   Mesh = CreateDefaultSubobject<UStaticMeshComponent>("Mesh");
   Mesh->AttachTo(RootComponent);
   Mesh->SetStaticMesh(ConstructorHelpers::FObjectFinder<UStaticMesh>(TEXT("StaticMesh'/Game/Meshes/Basic/BasicTile.BasicTile'")).Object);
+  Mesh->SetCollisionResponseToChannel(COLLISION_MAP_TILE, ECollisionResponse::ECR_Block);
 }
 
 FVector AMapTile::EntityPosition() { return GetActorLocation() + RelativePawnLocation; }
 
-void AMapTile::AssignEntity_Implementation(AMapBasicEntity* ent)
+void AMapTile::AssignEntity(AMapBasicEntity* ent)
+{
+  if (Role < ROLE_Authority) {
+    ServerAssignEntity(ent);
+  } else {
+    DoAssignEntity(ent);
+  }
+}
+
+void AMapTile::ServerAssignEntity_Implementation(AMapBasicEntity* ent)
+{
+  DoAssignEntity(ent);
+}
+
+bool AMapTile::ServerAssignEntity_Validate(AMapBasicEntity* ent)
+{
+  return true;
+}
+
+void AMapTile::DoAssignEntity(AMapBasicEntity* ent)
 {
   if (AssignedEntity.Contains(ent)) {
     AssignedEntity.Remove(ent);
@@ -27,9 +47,9 @@ void AMapTile::AssignEntity_Implementation(AMapBasicEntity* ent)
   }
 }
 
-bool AMapTile::AssignEntity_Validate(AMapBasicEntity* ent)
+bool AMapTile::IsTransitable()
 {
-  return true;
+  return Transitable;
 }
 
 void AMapTile::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
@@ -39,5 +59,7 @@ void AMapTile::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifet
   DOREPLIFETIME(AMapTile, AssignedEntity);
   DOREPLIFETIME(AMapTile, Mesh);
   DOREPLIFETIME(AMapTile, OpenTiles);
+  DOREPLIFETIME(AMapTile, Clearance);
+  DOREPLIFETIME(AMapTile, Transitable);
 }
 

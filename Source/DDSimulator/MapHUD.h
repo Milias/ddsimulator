@@ -11,6 +11,9 @@ class DDSIMULATOR_API AMapHUD : public AHUD
 	GENERATED_BODY()
 
 public:
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement)
+  bool MovingEntity;
+
   AMapHUD();
 
   virtual void DrawHUD() override;

@@ -28,9 +28,7 @@ public:
   FVector CameraInitialPosition;
   FVector2D CameraFirstRightClick;
   bool PressingRightClick;
-
-  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Selection)
-  TArray<AMapBasicEntity*> SelectedEntity;
+  bool CameraDragging;
 
   AMapPlayerController(const FObjectInitializer & PCIP);
   
@@ -46,20 +44,34 @@ public:
   void CameraZoomIn(float d);
 
   UFUNCTION(BlueprintCallable, Category = CameraInputs)
-  void CameraStartDrag();
+  void RightClickPressed();
 
   UFUNCTION(BlueprintCallable, Category = CameraInputs)
-  void CameraStopDrag();
+  void RightClickReleased();
 
   UFUNCTION(BlueprintCallable, Category = CameraInputs)
-  void CameraDrag(float d);
+  void MouseMoving(float d);
 
   UFUNCTION(BlueprintCallable, Category = Selection)
-  void SelectEntityByIndex(const FTileIndex& p);
+  TArray<AMapBasicEntity*> GetEntitiesInTrace();
 
   UFUNCTION(BlueprintCallable, Category = Selection)
   void TraceSelection();
 
   UFUNCTION(BlueprintCallable, Category = Selection)
   void SelectEntities(const TArray<AMapBasicEntity*>& Selection);
+
+  UFUNCTION(BlueprintCallable, Category = Movement)
+  AMapTile * GetTileUnderCursor();
+
+  UFUNCTION(BlueprintCallable, Category = Movement)
+  void MoveSelectionToTile(AMapBasicEntity* Entity, const FTileIndex& Tile);
+
+  UFUNCTION(Server, WithValidation, Reliable)
+  void ServerMoveSelectionToTile(AMapBasicEntity* Entity, const FTileIndex& Tile);
+
+  void DoMoveSelectionToTile(AMapBasicEntity* Entity, const FTileIndex& Tile);
+
+  UFUNCTION(Server, WithValidation, Reliable)
+  void Spawn();
 };

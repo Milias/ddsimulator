@@ -35,8 +35,22 @@ public:
   AMapTile * GetTileFromPosition(FVector p);
 
   UFUNCTION(BlueprintCallable, Category = Map)
-  TArray<AMapTile*> GetTilesFromIndex(const TArray<FTileIndex>& pos);
+  TArray<AMapTile*> GetTilesFromIndex(const TArray<FTileIndex>& Index);
 
   UFUNCTION(BlueprintCallable, Category = Map)
-  AMapTile* GetTileFromIndex(const FTileIndex& pos);
+  AMapTile* GetTileFromIndex(const FTileIndex& Index);
+
+  UFUNCTION(BlueprintCallable, Category = Map)
+  AMapTile* UnsafeGetTileFromIndex(const FTileIndex& Index);
+
+  UFUNCTION(BlueprintCallable, Category = Map)
+  bool CheckIndex(const FTileIndex& Index);
+
+  UFUNCTION(BlueprintCallable, Category = Map)
+  void CalculateClearance();
+
+  UFUNCTION(Server, WithValidation, Reliable)
+  void ServerCalculateClearance();
+
+  void DoCalculateClearance();
 };

@@ -10,6 +10,9 @@
 #include <json/json.h>
 #include <lodepng/lodepng.h>
 
+#define COLLISION_MAP_TILE		        ECollisionChannel::ECC_GameTraceChannel1
+#define COLLISION_MAP_BASIC_ENTITY		ECollisionChannel::ECC_GameTraceChannel2
+
 #define print(text) if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 3, FColor::White,text)
 
 //Map Log

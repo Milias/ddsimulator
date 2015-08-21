@@ -21,34 +21,25 @@ void AMapMode::Tick(float DeltaTime)
   Super::Tick(DeltaTime);
 }
 
-AMapBase* AMapMode::CreateBaseMap()
+void AMapMode::ServerCreateBaseMap_Implementation()
 {
   Cast<AMapState>(GameState)->Map = GetWorld()->SpawnActor<AMapBase>(AMapBase::StaticClass());
-  return Cast<AMapState>(GameState)->Map;
 }
 
-void AMapMode::RegisterBasicEntity_Implementation(const TArray<FTileIndex>& pos)
-{
-  AMapBasicEntity* ent;
-  ent = GetWorld()->SpawnActor<AMapBasicEntity>(AMapBasicEntity::StaticClass());
-  ent->AssignTiles(Cast<AMapState>(GameState)->Map->GetTilesFromIndex(pos));
-
-  Cast<AMapState>(GameState)->MapEntities.Add(ent);
-}
-
-bool AMapMode::RegisterBasicEntity_Validate(const TArray<FTileIndex>& pos)
+bool AMapMode::ServerCreateBaseMap_Validate()
 {
   return true;
 }
 
-void AMapMode::UnRegisterBasicEntity_Implementation(AMapBasicEntity * ent)
+void AMapMode::ServerBeginMapBattle_Implementation()
 {
-  ent->UnRegister();
-  Cast<AMapState>(GameState)->MapEntities.Remove(ent);
-  ent->Destroy();
+  AMapState * state = Cast<AMapState>(GameState);
+  if (state->MapEntities.Num() == 0) { return; }
+
 }
 
-bool AMapMode::UnRegisterBasicEntity_Validate(AMapBasicEntity * ent)
+bool AMapMode::ServerBeginMapBattle_Validate()
 {
   return true;
 }
+

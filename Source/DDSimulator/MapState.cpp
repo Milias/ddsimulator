@@ -18,12 +18,6 @@ void AMapState::Tick(float dt)
   Super::Tick(dt);
 }
 
-void AMapState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
-{
-  DOREPLIFETIME(AMapState, Map);
-  DOREPLIFETIME(AMapState, MapEntities);
-}
-
 TArray<AMapBasicEntity*> AMapState::GetBasicEntityByIndex(const TArray<FTileIndex>& pos)
 {
   TArray<AMapBasicEntity*> ret;
@@ -40,4 +34,10 @@ TArray<AMapBasicEntity*> AMapState::GetBasicEntityByUID(int32 uid)
     if ((*it)->uid == uid) { ret.Add(*it); }
   }
   return ret;
+}
+
+void AMapState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
+{
+  DOREPLIFETIME(AMapState, Map);
+  DOREPLIFETIME(AMapState, MapEntities);
 }

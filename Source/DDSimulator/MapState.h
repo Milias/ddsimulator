@@ -4,6 +4,7 @@
 
 #include "GameFramework/GameState.h"
 #include "MapBase.h"
+#include "MapPlayerState.h"
 #include "MapState.generated.h"
 
 UCLASS()

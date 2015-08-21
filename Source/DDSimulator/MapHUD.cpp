@@ -3,9 +3,7 @@
 #include "DDSimulator.h"
 #include "MapHUD.h"
 
-AMapHUD::AMapHUD()
-{
-}
+AMapHUD::AMapHUD() : MovingEntity(false) {}
 
 void AMapHUD::DrawHUD()
 {

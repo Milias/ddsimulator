@@ -81,8 +81,14 @@ struct FEntityCombat
 
   UPROPERTY(BlueprintReadWrite, EditAnywhere)
   bool HasTurn;
+  
+  UPROPERTY(BlueprintReadWrite, EditAnywhere)
+  TArray<int32> Initiative;
 
-  FEntityCombat() : CanEnterCombat(true), HasTurn(false) {}
+  FEntityCombat() : CanEnterCombat(true), HasTurn(false)
+  {
+    Initiative.SetNumZeroed(2);
+  }
 };
 
 UCLASS()

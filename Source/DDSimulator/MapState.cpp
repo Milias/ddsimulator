@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "DDSimulator.h"
+#include <functional>
 #include "MapState.h"
 
 AMapState::AMapState(const FObjectInitializer & PCIP) : Super(PCIP), Map(0)
@@ -34,6 +35,32 @@ TArray<AMapBasicEntity*> AMapState::GetBasicEntityByUID(int32 uid)
     if ((*it)->uid == uid) { ret.Add(*it); }
   }
   return ret;
+}
+
+void AMapState::SortEntitiesByInitiative()
+{
+  if (MapEntities.Num() == 0) { return; }
+  if (Role < ROLE_Authority) {
+    ServerSortEntitiesByInitiative();
+  } else {
+    DoSortEntitiesByInitiative();
+  }
+}
+
+void AMapState::ServerSortEntitiesByInitiative_Implementation()
+{
+  if (MapEntities.Num() == 0) { return; }
+  DoSortEntitiesByInitiative();
+}
+
+bool AMapState::ServerSortEntitiesByInitiative_Validate()
+{
+  return true;
+}
+
+void AMapState::DoSortEntitiesByInitiative()
+{
+  
 }
 
 void AMapState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const

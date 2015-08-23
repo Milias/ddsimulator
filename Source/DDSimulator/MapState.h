@@ -33,4 +33,12 @@ public:
   */
   UFUNCTION(BlueprintCallable, Category = Entity)
   TArray<AMapBasicEntity*> GetBasicEntityByUID(int32 uid);
+  
+  UFUNCTION(BlueprintCallable, Category = Combat)
+  void SortEntitiesByInitiative();
+  
+  UFUNCTION(Server, WithValidation, Reliable)
+  void ServerSortEntitiesByInitiative();
+  
+  void DoSortEntitiesByInitiative();
 };

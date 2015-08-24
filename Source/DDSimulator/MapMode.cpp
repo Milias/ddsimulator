@@ -30,21 +30,3 @@ bool AMapMode::ServerCreateBaseMap_Validate()
 {
   return true;
 }
-
-void AMapMode::ServerBeginMapBattle_Implementation()
-{
-  AMapState * state = Cast<AMapState>(GameState);
-  
-  if (state == NULL) { return; }
-  if (state->MapEntities.Num() == 0) { return; }
-  
-  for (uint32 i = 0; i != state->MapEntities.Num(); i++) {
-    state->MapEntities[i]->CombatAttributes.Initiative[0] += FMath::RandRange(1,20);
-  }
-}
-
-bool AMapMode::ServerBeginMapBattle_Validate()
-{
-  return true;
-}
-

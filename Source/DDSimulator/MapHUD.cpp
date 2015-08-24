@@ -10,6 +10,4 @@ void AMapHUD::DrawHUD()
   Super::DrawHUD();
 }
 
-void AMapHUD::UpdateSelection_Implementation(const TArray<AMapBasicEntity*>& ent)
-{
-}
+void AMapHUD::UpdateSelection_Implementation(const TArray<AMapBasicEntity*>& ent) {}

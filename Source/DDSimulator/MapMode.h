@@ -21,7 +21,4 @@ public:
 
   UFUNCTION(Server, WithValidation, Reliable, BlueprintCallable, Category = Map)
   void ServerCreateBaseMap();
-
-  UFUNCTION(Server, WithValidation, Reliable, BlueprintCallable, Category = Map)
-  void ServerBeginMapBattle();
 };

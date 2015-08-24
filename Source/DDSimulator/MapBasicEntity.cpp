@@ -249,6 +249,120 @@ void AMapBasicEntity::DoFollowProposedPath()
   ProposedMovingTiles.Empty();
 }
 
+void AMapBasicEntity::EnterTurn()
+{
+  if (CombatAttributes.CanEnterCombat && !CombatAttributes.HasTurn) {
+    if (Role < ROLE_Authority) {
+      ServerEnterTurn();
+    } else {
+      DoEnterTurn();
+    }
+  }
+}
+
+void AMapBasicEntity::ServerEnterTurn_Implementation()
+{
+  if (CombatAttributes.CanEnterCombat && !CombatAttributes.HasTurn) {
+    DoEnterTurn();
+  }
+}
+
+bool AMapBasicEntity::ServerEnterTurn_Validate()
+{
+  return true;
+}
+
+void AMapBasicEntity::DoEnterTurn()
+{
+  CombatAttributes.HasTurn = true;
+  Actions.Reset();
+}
+
+void AMapBasicEntity::ExitTurn()
+{
+  if (CombatAttributes.CanEnterCombat && CombatAttributes.HasTurn) {
+    if (Role < ROLE_Authority) {
+      ServerExitTurn();
+    } else {
+      DoExitTurn();
+    }
+  }
+}
+
+void AMapBasicEntity::ServerExitTurn_Implementation()
+{
+  if (CombatAttributes.CanEnterCombat && CombatAttributes.HasTurn) {
+    DoExitTurn();
+  }
+}
+
+bool AMapBasicEntity::ServerExitTurn_Validate()
+{
+  return true;
+}
+
+void AMapBasicEntity::DoExitTurn()
+{
+  CombatAttributes.HasTurn = false;
+  Actions.Zeroed();
+}
+
+void AMapBasicEntity::EnterCombat()
+{
+  if (CombatAttributes.CanEnterCombat) {
+    if (Role < ROLE_Authority) {
+      ServerEnterCombat();
+    } else {
+      DoEnterCombat();
+    }
+  }
+}
+
+void AMapBasicEntity::ServerEnterCombat_Implementation()
+{
+  if (CombatAttributes.CanEnterCombat) {
+    DoEnterCombat();
+  }
+}
+
+bool AMapBasicEntity::ServerEnterCombat_Validate()
+{
+  return true;
+}
+
+void AMapBasicEntity::DoEnterCombat()
+{
+  CombatAttributes.Initiative[0] += FMath::RandRange(1, 20);
+}
+
+void AMapBasicEntity::ExitCombat()
+{
+  if (CombatAttributes.CanEnterCombat) {
+    if (Role < ROLE_Authority) {
+      ServerExitCombat();
+    } else {
+      DoExitCombat();
+    }
+  }
+}
+
+void AMapBasicEntity::ServerExitCombat_Implementation()
+{
+  if (CombatAttributes.CanEnterCombat) {
+    DoExitCombat();
+  }
+}
+
+bool AMapBasicEntity::ServerExitCombat_Validate()
+{
+  return true;
+}
+
+void AMapBasicEntity::DoExitCombat()
+{
+  CombatAttributes.Initiative[0] = CombatAttributes.Initiative[1];
+}
+
 void AMapBasicEntity::Register(const FString& owner, const FTileIndex& pos, int32 size)
 {
   if (Role < ROLE_Authority) {
@@ -271,6 +385,8 @@ bool AMapBasicEntity::ServerRegister_Validate(const FString& owner, const FTileI
 void AMapBasicEntity::DoRegister(const FString& owner, const FTileIndex& pos, int32 size)
 {
   TArray<AMapTile*> tiles;
+  EntitySize = size;
+  GameOwner = owner;
 
   for (int32 i = 0; i < size; i++) {
     for (int32 j = 0; j < size; j++) {
@@ -279,9 +395,7 @@ void AMapBasicEntity::DoRegister(const FString& owner, const FTileIndex& pos, in
   }
 
   AssignTiles(tiles);
-  GameOwner = owner;
   Cast<AMapState>(GetWorld()->GameState)->MapEntities.Add(this);
-  EntitySize = size;
 }
 
 void AMapBasicEntity::UnRegister()
@@ -325,5 +439,6 @@ void AMapBasicEntity::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & O
   DOREPLIFETIME(AMapBasicEntity, StopMovement);
   DOREPLIFETIME(AMapBasicEntity, EntitySize);
   DOREPLIFETIME(AMapBasicEntity, Actions);
+  DOREPLIFETIME(AMapBasicEntity, InvolvedBattles);
   DOREPLIFETIME(AMapBasicEntity, GameOwner);
 }

@@ -58,6 +58,9 @@ struct FEntityActions
   UPROPERTY(BlueprintReadWrite, EditAnywhere)
   TArray<int32> Movement;
 
+  void Reset() { Standard[0] = Standard[1]; Minor[0] = Minor[1]; Movement[0] = Movement[1]; }
+  void Zeroed() { Standard[0] = 0; Minor[0] = 0; Movement[0] = 0; }
+
   bool UseStandardAction() { if (Standard[0] > 0 && HasActions) { Standard[0]--; return true; } else { return false; } }
   bool UseMinorAction() { if (Minor[0] > 0 && HasActions) { Minor[0]--; return true; } else { return false; } }
   bool UseMovementAction() { if (Movement[0] > 0 && HasActions) { Movement[0]--; return true; } else { return false; } }
@@ -85,9 +88,14 @@ struct FEntityCombat
   UPROPERTY(BlueprintReadWrite, EditAnywhere)
   TArray<int32> Initiative;
 
+  UPROPERTY(BlueprintReadWrite, EditAnywhere)
+  TArray<int32> Health;
+
   FEntityCombat() : CanEnterCombat(true), HasTurn(false)
   {
     Initiative.SetNumZeroed(2);
+    Health.SetNumZeroed(2);
+    Health[0] = Health[1] = 100;
   }
 };
 
@@ -137,6 +145,9 @@ public:
   int32 EntitySize;
 
   UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = Combat)
+  int32 InvolvedBattles;
+
+  UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = Combat)
   FEntityCombat CombatAttributes;
 
   UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = Combat)
@@ -148,6 +159,24 @@ public:
   /* PathFinding variables and functions */
   TArray<FTileIndex*> open;
   TArray<FTileIndex*> closed;
+
+  AMapBasicEntity();
+
+	virtual void BeginPlay() override;
+	virtual void Tick( float DeltaSeconds ) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
+
+  /****** Map ******/
+  
+  UFUNCTION(BlueprintCallable, Category = Map)
+  void AssignTiles(const TArray<AMapTile*>& tiles);
+
+  UFUNCTION(Server, WithValidation, Reliable)
+  void ServerAssignTiles(const TArray<AMapTile*>& tiles);
+
+  void DoAssignTiles(const TArray<AMapTile*>& tiles);
+
+  /******* Movement *******/
 
   FTileIndex* GetLowest(TArray<FTileIndex*>& arr);
 
@@ -176,20 +205,6 @@ public:
 
   void DoReconstructPath(const FTileIndex& dest, const FTileIndex& origin);
 
-  AMapBasicEntity();
-
-	virtual void BeginPlay() override;
-	virtual void Tick( float DeltaSeconds ) override;
-	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
-  
-  UFUNCTION(BlueprintCallable, Category = Map)
-  void AssignTiles(const TArray<AMapTile*>& tiles);
-
-  UFUNCTION(Server, WithValidation, Reliable)
-  void ServerAssignTiles(const TArray<AMapTile*>& tiles);
-
-  void DoAssignTiles(const TArray<AMapTile*>& tiles);
-
   UFUNCTION(BlueprintCallable, Category = Movement)
   void FollowProposedPath();
 
@@ -198,9 +213,41 @@ public:
 
   void DoFollowProposedPath();
 
-  /* Finds a path between entity's current position and the tiles
-   * given in the argument.
-   */
+  /***** Combat *****/
+
+  UFUNCTION(BlueprintCallable, Category = Combat)
+  void EnterTurn();
+
+  UFUNCTION(Server, WithValidation, Reliable)
+  void ServerEnterTurn();
+
+  void DoEnterTurn();
+  
+  UFUNCTION(BlueprintCallable, Category = Combat)
+  void ExitTurn();
+
+  UFUNCTION(Server, WithValidation, Reliable)
+  void ServerExitTurn();
+
+  void DoExitTurn();
+
+  UFUNCTION(BlueprintCallable, Category = Combat)
+  void EnterCombat();
+
+  UFUNCTION(Server, WithValidation, Reliable)
+  void ServerEnterCombat();
+
+  void DoEnterCombat();
+  
+  UFUNCTION(BlueprintCallable, Category = Combat)
+  void ExitCombat();
+
+  UFUNCTION(Server, WithValidation, Reliable)
+  void ServerExitCombat();
+
+  void DoExitCombat();
+
+  /****** Entity ******/
 
   UFUNCTION(BlueprintCallable, Category = Entity)
   void Register(const FString& MapPlayerOwner, const FTileIndex& pos, int32 size);

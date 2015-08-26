@@ -96,6 +96,9 @@ public:
   
   UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = Combat)
   TArray<FBattleData> MapBattles;
+
+  UPROPERTY(EditAnywhere, Category = Combat)
+  UPowerDataAsset * PowersDB;
   
   AMapState(const FObjectInitializer & PCIP);
 
@@ -138,4 +141,9 @@ public:
   
   UFUNCTION(BlueprintCallable, Category = Combat)
   TArray<AMapBasicEntity*> GetNextTurnEntities(int32 n);
+
+  UFUNCTION(BlueprintCallable, Category = Combat)
+  TArray<AMapTile*> GetAreaTiles(const AMapBasicEntity* Entity, const TArray<int32>& Range, const AMapTile* Center, int32 EntitySize);
+
+  TArray<AMapTile*> GetTilesInRegion(int32 Range, const AMapTile* Center, int32 EntitySize, bool IncludeCenter = true);
 };

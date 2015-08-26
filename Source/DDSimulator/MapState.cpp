@@ -9,6 +9,8 @@ int32 FBattleData::BattleCount = 0;
 AMapState::AMapState(const FObjectInitializer & PCIP) : Super(PCIP), Map(0)
 {
   bReplicates = true;
+
+  PowersDB = ConstructorHelpers::FObjectFinder<UPowerDataAsset>(TEXT("PowerDataAsset'/Game/DataBases/DB_Powers.DB_Powers'")).Object;
 }
 
 void AMapState::BeginPlay()
@@ -143,6 +145,110 @@ TArray<AMapBasicEntity*> AMapState::GetNextTurnEntities(int32 n)
     R.Add(MapEntities[i%MapEntities.Num()]);
   }
   return R;
+}
+
+/*
+Range: same as the one defined in "Power.h".
+Center: origin tile.
+Direction: for blasts,
+  0 - Top
+  1 - Top-right
+  2 - Right
+  3 - Down-right
+  4 - Down
+  5 - Down-left
+  6 - Left
+  7 - Top-left
+*/
+TArray<AMapTile*> AMapState::GetAreaTiles(const AMapBasicEntity* Entity, const TArray<int32>& Range, const AMapTile* Center, int32 EntitySize)
+{
+  TArray<AMapTile*> r; AMapTile* t = NULL;
+  switch (Range[0]) {
+  // Melee
+  case 0:
+    switch (Range[1]) {
+    //Melee weapon
+    case 0:
+      break;
+
+    //Melee touch
+    case -1:
+      break;
+
+    //Melee #
+    default:
+      r.Append(GetTilesInRegion(Range[1], Entity->AssignedTiles[0], EntitySize));
+    }
+    break;
+
+  //Ranged
+  case 1:
+    switch (Range[1]) {
+    //Ranged weapon
+    case 0:
+      break;
+
+    //Ranged sight
+    case -1:
+      break;
+
+    //Ranged #
+    default:
+      r.Append(GetTilesInRegion(Range[1], Entity->AssignedTiles[0], EntitySize));
+    }
+    break;
+
+  //Close
+  case 2:
+    switch (Range[1]) {
+    //Burst
+    case 0:
+      r.Append(GetTilesInRegion(Range[2], Entity->AssignedTiles[0], EntitySize, false));
+      break;
+
+    //Blast
+    case 1:
+      break;
+    }
+    break;
+
+  //AoE
+  case 3:
+    switch (Range[1]) {
+    //AoE burst
+    case 0:
+      if (Entity->GetNearestAssignedTile(Center)->Index.MaxDist(Center->Index) > Range[3]) { break; }
+      r.Append(GetTilesInRegion(Range[2], Center, 1));
+      break;
+
+    //AoE wall
+    case 1:
+      break;
+    }
+    break;
+  }
+  return r;
+}
+
+TArray<AMapTile*> AMapState::GetTilesInRegion(int32 Range, const AMapTile* Center, int32 EntitySize, bool IncludeCenter)
+{
+  TArray<AMapTile*> r; AMapTile* t = NULL;
+  for (int32 i = 0; i != Range; i++) {
+    for (int32 j = 0; j != Range; j++) {
+      if (i == 0 && j == 0 && !IncludeCenter) { continue; }
+      t = Map->UnsafeGetTileFromIndex(Center->Index + FTileIndex(i, j));
+      if (t != NULL) { r.AddUnique(t); }
+    }
+  }
+  for (int32 i = 1; i != EntitySize; i++) {
+    for (int32 j = 0; j != Range + i; j++) {
+      t = Map->UnsafeGetTileFromIndex(Center->Index + FTileIndex(j, Range + i));
+      if (t != NULL) { r.AddUnique(t); }
+      t = Map->UnsafeGetTileFromIndex(Center->Index + FTileIndex(Range + i, j));
+      if (t != NULL) { r.AddUnique(t); }
+    }
+  }
+  return r;
 }
 
 void AMapState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const

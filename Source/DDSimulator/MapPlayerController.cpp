@@ -154,9 +154,9 @@ AMapTile * AMapPlayerController::GetTileUnderCursor()
     if (Cast<AMapTile>(TraceResult.GetActor())) {
       tile = Cast<AMapTile>(TraceResult.GetActor());
     }
-    //if (Cast<AMapBasicEntity>(TraceResult.GetActor())) {
-      //tile = Cast<AMapBasicEntity>(TraceResult.GetActor())->AssignedTiles[0];
-    //}
+    if (Cast<AMapBasicEntity>(TraceResult.GetActor())) {
+      tile = Cast<AMapBasicEntity>(TraceResult.GetActor())->AssignedTiles[0];
+    }
   }
   return tile;
 }
@@ -191,14 +191,37 @@ void AMapPlayerController::DoMoveSelectionToTile(AMapBasicEntity* Entity, const 
   }
 }
 
-void AMapPlayerController::Spawn_Implementation()
+void AMapPlayerController::BeginChooseTargets(AMapBasicEntity * Entity, APower const* Power)
 {
-  GetWorld()->SpawnActor<AMapBasicEntity>(AMapBasicEntity::StaticClass())->Register(GetName(), FTileIndex(), 1);
-  GetWorld()->SpawnActor<AMapBasicEntity>(AMapBasicEntity::StaticClass())->Register(GetName(), FTileIndex(), 2);
-  GetWorld()->SpawnActor<AMapBasicEntity>(AMapBasicEntity::StaticClass())->Register(GetName(), FTileIndex(), 3);
+  if (IsChoosingTargets) { return; }
+  TargetableTiles.Empty(); TargetableEntities.Empty(); TargetsToChoose.SetNumZeroed(4);
+  switch (Power->Data.Range[0]) {
+  case -1:
+    TargetableEntities.Add(Entity);
+    break;
+
+  case 0:
+    switch (Power->Data.Range[1]) {
+    case 0:
+      break;
+
+    case -1:
+      break;
+
+    default:
+      break;
+    }
+  }
 }
 
 bool AMapPlayerController::Spawn_Validate()
 {
   return true;
+}
+
+void AMapPlayerController::Spawn_Implementation()
+{
+  GetWorld()->SpawnActor<AMapBasicEntity>(AMapBasicEntity::StaticClass())->Register(GetName(), FTileIndex(), 1);
+  GetWorld()->SpawnActor<AMapBasicEntity>(AMapBasicEntity::StaticClass())->Register(GetName(), FTileIndex(), 2);
+  GetWorld()->SpawnActor<AMapBasicEntity>(AMapBasicEntity::StaticClass())->Register(GetName(), FTileIndex(), 3);
 }

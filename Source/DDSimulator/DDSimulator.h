@@ -6,6 +6,7 @@
 #include "UnrealNetwork.h"
 #include "UnrealMath.h"
 #include "SceneViewport.h"
+#include <fstream>
 #include <algorithm>
 #include <json/json.h>
 #include <lodepng/lodepng.h>

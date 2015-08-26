@@ -5,7 +5,7 @@
 #include "MapState.h"
 #include "MapBasicEntity.h"
 
-AMapBasicEntity::AMapBasicEntity() : uid(0), CenterLocation(FVector::ZeroVector), NextCenterLocation(FVector::ZeroVector), MovingTime(0), MaxMovingTime(0.25f), StopMovement(false), EntityMoving(false), Actions(FEntityActions())
+AMapBasicEntity::AMapBasicEntity() : uid(0), Name(""), CenterLocation(FVector::ZeroVector), NextCenterLocation(FVector::ZeroVector), MovingTime(0), MaxMovingTime(0.25f), StopMovement(false), EntityMoving(false), Actions(FEntityActions())
 {
   PrimaryActorTick.bCanEverTick = true;
   bReplicates = true;
@@ -363,6 +363,48 @@ void AMapBasicEntity::DoExitCombat()
   CombatAttributes.Initiative[0] = CombatAttributes.Initiative[1];
 }
 
+void AMapBasicEntity::LoadPowers(const TArray<int32>& UIDs)
+{
+  if (Role < ROLE_Authority) {
+    ServerLoadPowers(UIDs);
+  } else {
+    DoLoadPowers(UIDs);
+  }
+}
+
+void AMapBasicEntity::ServerLoadPowers_Implementation(const TArray<int32>& UIDs)
+{
+  DoLoadPowers(UIDs);
+}
+
+bool AMapBasicEntity::ServerLoadPowers_Validate(const TArray<int32>& UIDs)
+{
+  return true;
+}
+
+void AMapBasicEntity::DoLoadPowers(const TArray<int32>& UIDs)
+{
+  APower * t = NULL;
+  for (int32 i = 0; i != UIDs.Num(); i++) {
+    if (EntityPowers.FindByPredicate([&](APower* p) { return p->Data.UID == UIDs[i]; }) == nullptr)
+    t = GetWorld()->SpawnActor<APower>();
+    t->Initialize(UIDs[i]);
+    t->SetOwnerEntity(this);
+    EntityPowers.Add(t);
+  }
+}
+
+AMapTile* AMapBasicEntity::GetNearestAssignedTile(const AMapTile* Tile) const
+{
+  float dist = AssignedTiles[0]->Index.SqrDist(Tile->Index); int32 index = 0;
+  for (int32 i = 0; i != AssignedTiles.Num(); i++) {
+    if (AssignedTiles[i]->Index.SqrDist(Tile->Index) < dist) {
+      index = i; dist = AssignedTiles[i]->Index.SqrDist(Tile->Index);
+    }
+  }
+  return AssignedTiles[index];
+}
+
 void AMapBasicEntity::Register(const FString& owner, const FTileIndex& pos, int32 size)
 {
   if (Role < ROLE_Authority) {
@@ -429,6 +471,7 @@ void AMapBasicEntity::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & O
 {
   DOREPLIFETIME(AMapBasicEntity, uid);
   DOREPLIFETIME(AMapBasicEntity, Mesh);
+  DOREPLIFETIME(AMapBasicEntity, Name);
   DOREPLIFETIME(AMapBasicEntity, AssignedTiles);
   DOREPLIFETIME(AMapBasicEntity, MovingTiles);
   DOREPLIFETIME(AMapBasicEntity, ProposedMovingTiles);

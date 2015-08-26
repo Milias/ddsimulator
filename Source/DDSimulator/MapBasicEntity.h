@@ -3,6 +3,7 @@
 #pragma once
 
 #include "GameFramework/Pawn.h"
+#include "PowerDataAsset.h"
 #include "MapBasicEntity.generated.h"
 
 class AMapTile;
@@ -84,18 +85,29 @@ struct FEntityCombat
 
   UPROPERTY(BlueprintReadWrite, EditAnywhere)
   bool HasTurn;
+
+  UPROPERTY(BlueprintReadWrite, EditAnywhere)
+  int32 Level;
   
   UPROPERTY(BlueprintReadWrite, EditAnywhere)
   TArray<int32> Initiative;
+  
+  UPROPERTY(BlueprintReadWrite, EditAnywhere)
+  TArray<int32> AbilityScores; //STR, CON, DEX, INT, WIS, CHA
 
   UPROPERTY(BlueprintReadWrite, EditAnywhere)
   TArray<int32> Health;
 
-  FEntityCombat() : CanEnterCombat(true), HasTurn(false)
+  UPROPERTY(BlueprintReadWrite, EditAnywhere)
+  TArray<int32> HealSurges;
+
+  FEntityCombat() : Level(1), CanEnterCombat(true), HasTurn(false)
   {
     Initiative.SetNumZeroed(2);
     Health.SetNumZeroed(2);
-    Health[0] = Health[1] = 100;
+    HealSurges.SetNumZeroed(2);
+    AbilityScores.SetNumZeroed(6);
+    Health[0] = Health[1] = 1;
   }
 };
 
@@ -107,6 +119,9 @@ class DDSIMULATOR_API AMapBasicEntity : public APawn
 public:
   UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadOnly, Category = Entity)
   int32 uid;
+  
+  UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadOnly, Category = Entity)
+  FString Name;
 
   UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = Entity)
   UStaticMeshComponent * Mesh;
@@ -114,9 +129,7 @@ public:
   UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadWrite, Category = Entity)
   TArray<AMapTile*> AssignedTiles;
 
-  /*
-    Allocates a number of steps to be followed by this entity.
-  */
+  /* Allocates a number of steps to be followed by this entity. */
   UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
   TArray<FTileIndex> MovingTiles;
 
@@ -155,6 +168,9 @@ public:
 
   UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = Combat)
   FString GameOwner;
+
+  UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = Combat)
+  TArray<APower*> EntityPowers;
 
   /* PathFinding variables and functions */
   TArray<FTileIndex*> open;
@@ -247,7 +263,18 @@ public:
 
   void DoExitCombat();
 
+  UFUNCTION(BlueprintCallable, Category = Combat)
+  void LoadPowers(const TArray<int32>& UIDs);
+
+  UFUNCTION(Server, WithValidation, Reliable)
+  void ServerLoadPowers(const TArray<int32>& UIDs);
+
+  void DoLoadPowers(const TArray<int32>& UIDs);
+
   /****** Entity ******/
+
+  UFUNCTION(BlueprintCallable, Category = Entity)
+  AMapTile* GetNearestAssignedTile(const AMapTile* Tile) const;
 
   UFUNCTION(BlueprintCallable, Category = Entity)
   void Register(const FString& MapPlayerOwner, const FTileIndex& pos, int32 size);

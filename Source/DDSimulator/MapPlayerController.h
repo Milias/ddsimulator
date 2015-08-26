@@ -8,6 +8,7 @@
 #include "MapPlayerController.generated.h"
 
 class AMapBasicEntity;
+class APower;
 struct FTileIndex;
 
 UCLASS()
@@ -29,6 +30,22 @@ public:
   FVector2D CameraFirstRightClick;
   bool PressingRightClick;
   bool CameraDragging;
+
+  /****** Combat  ******/
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat)
+  bool IsChoosingTargets;
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat)
+  APower const * PowerToLaunch;
+  
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat)
+  TArray<int32> TargetsToChoose; // Same logic as power's "Target" variable.
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat)
+  TArray<AMapBasicEntity*> TargetableEntities;
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat)
+  TArray<AMapTile*> TargetableTiles;
 
   AMapPlayerController(const FObjectInitializer & PCIP);
   
@@ -71,6 +88,10 @@ public:
   void ServerMoveSelectionToTile(AMapBasicEntity* Entity, const FTileIndex& Tile);
 
   void DoMoveSelectionToTile(AMapBasicEntity* Entity, const FTileIndex& Tile);
+
+  UFUNCTION(BlueprintCallable, Category = Movement)
+  void BeginChooseTargets(AMapBasicEntity * Entity, APower const* Power);
+
 
   UFUNCTION(Server, WithValidation, Reliable)
   void Spawn();

@@ -12,31 +12,31 @@ struct FPowerData
 {
   GENERATED_USTRUCT_BODY()
 
-  UPROPERTY(EditAnywhere)
+  UPROPERTY(EditAnywhere, BlueprintReadWrite)
   int32 UID;
 
-  UPROPERTY(EditAnywhere)
+  UPROPERTY(EditAnywhere, BlueprintReadWrite)
   FString Name;
 
-  UPROPERTY(EditAnywhere)
+  UPROPERTY(EditAnywhere, BlueprintReadWrite)
   int32 Level;
 
-  UPROPERTY(EditAnywhere)
+  UPROPERTY(EditAnywhere, BlueprintReadWrite)
   FString Class;
 
-  UPROPERTY(EditAnywhere)
+  UPROPERTY(EditAnywhere, BlueprintReadWrite)
   FText FlavorText;
 
-  UPROPERTY(EditAnywhere)
+  UPROPERTY(EditAnywhere, BlueprintReadWrite)
   FString Kind; //"attack", "utility"
 
-  UPROPERTY(EditAnywhere)
+  UPROPERTY(EditAnywhere, BlueprintReadWrite)
   FString Usage; //"at-will", "encounter", "daily", "recharge#"
 
-  UPROPERTY(EditAnywhere)
+  UPROPERTY(EditAnywhere, BlueprintReadWrite)
   FString ActionType; //"standard", "minor", "movement", "free", "interrupt", "reaction", "trigger"
 
-  UPROPERTY(EditAnywhere)
+  UPROPERTY(EditAnywhere, BlueprintReadWrite)
   TArray<FString> Keywords;
 
   /*
@@ -54,7 +54,7 @@ struct FPowerData
     3     0    #1    #2   Area burst #1 within #2
     3     1    #1    #2   Area wall #1 within #2
   */
-  UPROPERTY(EditAnywhere)
+  UPROPERTY(EditAnywhere, BlueprintReadWrite)
   TArray<int32> Range;
 
   /*
@@ -64,7 +64,7 @@ struct FPowerData
   >0  ..........  Up to # units.
   <0  ..........  Exactly # units (except -1).
   */
-  UPROPERTY(EditAnywhere)
+  UPROPERTY(EditAnywhere, BlueprintReadWrite)
   TArray<int32> Target;
 
   FPowerData& operator=(const FPowerData& a) {
@@ -82,10 +82,19 @@ struct FPowerData
     return *this;
   }
 
-  FPowerData(int32 UID = 0, FString Name = "", int32 Level = 1, FString Class = "", FText FlavorText = FText::GetEmpty(), FString Kind = "", FString Usage = "", FString ActionType = "") : UID(UID), Name(Name), Level(Level), Class(Class), FlavorText(FlavorText), Kind(Kind), Usage(Usage), ActionType(ActionType) {
+  FPowerData(int32 UID = 0, FString Name = "", int32 Level = 1, FString Class = "", FText FlavorText = FText::GetEmpty(), FString Kind = "", FString Usage = "", FString ActionType = "") : 
+    UID(UID),
+    Name(Name),
+    Level(Level),
+    Class(Class),
+    FlavorText(FlavorText),
+    Kind(Kind),
+    Usage(Usage),
+    ActionType(ActionType)
+  {
     Keywords.SetNumZeroed(0);
     Range.SetNumZeroed(4);
-    Target.SetNumZeroed(3);
+    Target.SetNumZeroed(4);
   }
 };
 

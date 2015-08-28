@@ -17,7 +17,7 @@ public:
   TArray<FPowerData> items;
 
   UFUNCTION(BlueprintCallable, Category = Power)
-  void GetPowerByUID(int32 UID, FPowerData& Data);
+  FPowerData& GetPowerByUID(int32 UID);
 
   UFUNCTION(BlueprintCallable, Category = Power)
   bool CheckExists(int32 UID);

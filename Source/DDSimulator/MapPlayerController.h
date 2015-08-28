@@ -38,8 +38,12 @@ public:
   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat)
   APower const * PowerToLaunch;
   
+  /*
+  Same logic as power's "Target" variable, but taking into
+  account already selected ones.
+  */
   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat)
-  TArray<int32> TargetsToChoose; // Same logic as power's "Target" variable.
+  TArray<int32> TargetsToChoose;
 
   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat)
   TArray<AMapBasicEntity*> TargetableEntities;
@@ -90,7 +94,7 @@ public:
   void DoMoveSelectionToTile(AMapBasicEntity* Entity, const FTileIndex& Tile);
 
   UFUNCTION(BlueprintCallable, Category = Movement)
-  void BeginChooseTargets(AMapBasicEntity * Entity, APower const* Power);
+  void BeginChooseTargets(AMapBasicEntity * Entity, APower* Power);
 
 
   UFUNCTION(Server, WithValidation, Reliable)

@@ -438,6 +438,11 @@ void AMapBasicEntity::DoRegister(const FString& owner, const FTileIndex& pos, in
 
   AssignTiles(tiles);
   Cast<AMapState>(GetWorld()->GameState)->MapEntities.Add(this);
+
+  for (int32 i = 0; i != 20; i++) {
+    EntityPowers.Add(GetWorld()->SpawnActor<APower>());
+    EntityPowers[i]->Initialize(0);
+  }
 }
 
 void AMapBasicEntity::UnRegister()
@@ -484,4 +489,5 @@ void AMapBasicEntity::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & O
   DOREPLIFETIME(AMapBasicEntity, Actions);
   DOREPLIFETIME(AMapBasicEntity, InvolvedBattles);
   DOREPLIFETIME(AMapBasicEntity, GameOwner);
+  DOREPLIFETIME(AMapBasicEntity, EntityPowers);
 }

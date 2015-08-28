@@ -7,6 +7,7 @@
 APower::APower() : OwnerEntity(NULL), IsInitialized(false)
 {
   bReplicates = true;
+  bAlwaysRelevant = true;
 	PrimaryActorTick.bCanEverTick = false;
 }
 
@@ -61,7 +62,8 @@ bool APower::ServerInitialize_Validate(int32 UID)
 
 void APower::DoInitialize(int32 UID)
 {
-  Cast<AMapState>(GetWorld()->GameState)->PowersDB->GetPowerByUID(UID, Data);
+  Data = Cast<AMapState>(GetWorld()->GameState)->PowersDB->GetPowerByUID(UID);
+  print(Data.Name);
   IsInitialized = true;
 }
 
@@ -88,7 +90,7 @@ bool APower::ServerPowerAction_Validate(const TArray<AMapBasicEntity*>& Targets)
 
 void APower::DoPowerAction_Implementation(const TArray<AMapBasicEntity*>& Targets)
 {
-
+  print("Power " + Data.Name + " launched.");
 }
 
 void APower::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const

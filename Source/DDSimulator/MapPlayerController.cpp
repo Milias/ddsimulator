@@ -83,13 +83,16 @@ void AMapPlayerController::RightClickReleased()
 void AMapPlayerController::MouseMoving(float d)
 {
   if (Cast<AMapPlayerPawn>(GetPawn()) == NULL || Cast<AMapPlayerState>(PlayerState) == NULL) { return; }
+
   float x; float y; FVector2D CurrentPosition; AMapPlayerPawn * pawn = NULL; TArray<AMapBasicEntity*>* SelectedEntity = NULL;
-  if (PressingRightClick || Cast<AMapHUD>(MyHUD)->MovingEntity) {
+
+  if (PressingRightClick || Cast<AMapHUD>(MyHUD)->MovingEntity || IsChoosingTargets) {
     GetMousePosition(x, y);
     CurrentPosition = FVector2D(x, y);
     pawn = Cast<AMapPlayerPawn>(GetPawn());
     SelectedEntity = &Cast<AMapPlayerState>(PlayerState)->SelectedEntity;
   }
+
   if (PressingRightClick) {
     if (FVector2D::Distance(CurrentPosition, CameraFirstRightClick) > CameraDragDeadZone) {
       CameraDragging = true;
@@ -101,6 +104,7 @@ void AMapPlayerController::MouseMoving(float d)
       CameraDragging = false;
     }
   }
+
   if (Cast<AMapHUD>(MyHUD)->MovingEntity && !(*SelectedEntity)[0]->EntityMoving) {
     AMapTile * tile = GetTileUnderCursor();
     if (tile) {
@@ -111,6 +115,12 @@ void AMapPlayerController::MouseMoving(float d)
       }
     }
   } else { Cast<AMapPlayerPawn>(GetPawn())->MovingEntityMesh->SetVisibility(false); }
+
+  if (IsChoosingTargets) {
+    AMapTile * tile = GetTileUnderCursor();
+    if (tile) {
+    }
+  }
 }
 
 TArray<AMapBasicEntity*> AMapPlayerController::GetEntitiesInTrace()
@@ -191,13 +201,16 @@ void AMapPlayerController::DoMoveSelectionToTile(AMapBasicEntity* Entity, const 
   }
 }
 
-void AMapPlayerController::BeginChooseTargets(AMapBasicEntity * Entity, APower const* Power)
+void AMapPlayerController::BeginChooseTargets(AMapBasicEntity * Entity, APower* Power)
 {
   if (IsChoosingTargets) { return; }
+  PowerToLaunch = Power; TargetsToChoose = Power->Data.Target;
   TargetableTiles.Empty(); TargetableEntities.Empty(); TargetsToChoose.SetNumZeroed(4);
   switch (Power->Data.Range[0]) {
   case -1:
     TargetableEntities.Add(Entity);
+    IsChoosingTargets = false;
+    Power->PowerAction(TargetableEntities);
     break;
 
   case 0:

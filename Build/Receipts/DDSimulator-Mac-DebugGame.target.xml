@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<BuildReceipt xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Properties>
+    <Property Name="TargetName" Value="DDSimulator" />
+    <Property Name="Platform" Value="Mac" />
+    <Property Name="Configuration" Value="DebugGame" />
+    <Property Name="Precompile" Value="False" />
+  </Properties>
+  <BuildProducts>
+    <BuildProduct Path="$(ProjectDir)/Binaries/Mac/DDSimulator-Mac-DebugGame.app/Contents/MacOS/DDSimulator-Mac-DebugGame" Type="Executable" />
+    <BuildProduct Path="$(ProjectDir)/Binaries/Mac/DDSimulator-Mac-DebugGame.app/Contents/MacOS/libogg.dylib" Type="DynamicLibrary" />
+    <BuildProduct Path="$(ProjectDir)/Binaries/Mac/DDSimulator-Mac-DebugGame.app/Contents/MacOS/libvorbis.dylib" Type="DynamicLibrary" />
+    <BuildProduct Path="$(ProjectDir)/Binaries/Mac/DDSimulator-Mac-DebugGame.app/Contents/Resources/RadioEffectUnit.component/Contents/Info.plist" Type="RequiredResource" />
+    <BuildProduct Path="$(ProjectDir)/Binaries/Mac/DDSimulator-Mac-DebugGame.app/Contents/Resources/RadioEffectUnit.component/Contents/MacOS/RadioEffectUnit" Type="RequiredResource" />
+    <BuildProduct Path="$(ProjectDir)/Binaries/Mac/DDSimulator-Mac-DebugGame.app/Contents/Resources/RadioEffectUnit.component/Contents/Resources/English.lproj/Localizable.strings" Type="RequiredResource" />
+    <BuildProduct Path="$(ProjectDir)/Binaries/Mac/DDSimulator-Mac-DebugGame.app/Contents/Info.plist" Type="RequiredResource" />
+    <BuildProduct Path="$(ProjectDir)/Binaries/Mac/DDSimulator-Mac-DebugGame.app/Contents/PkgInfo" Type="RequiredResource" />
+    <BuildProduct Path="$(ProjectDir)/Binaries/Mac/DDSimulator-Mac-DebugGame.app/Contents/Resources/UE4.icns" Type="RequiredResource" />
+  </BuildProducts>
+  <RuntimeDependencies />
+  <bRequireDependenciesToExist>true</bRequireDependenciesToExist>
+</BuildReceipt>

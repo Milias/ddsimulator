@@ -19,6 +19,12 @@ public:
   UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Map)
   UCameraComponent * PlayerCamera;
 
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement)
+  UStaticMeshComponent * MovingEntityMesh;
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Entity)
+  UMaterial * TranslucidMaterial;
+
 	virtual void BeginPlay() override;
 	virtual void Tick( float DeltaSeconds ) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;

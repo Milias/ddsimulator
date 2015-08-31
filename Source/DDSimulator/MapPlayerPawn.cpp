@@ -9,11 +9,15 @@ AMapPlayerPawn::AMapPlayerPawn()
   bReplicates = true;
   bAlwaysRelevant = true;
   bFindCameraComponentWhenViewTarget = true;
+
+  /* Root component. */
   SetRootComponent(CreateDefaultSubobject<USceneComponent>("RootComponent"));
-  RootComponent->SetVisibility(false);
+
+  /* Camera */
+  RootComponent->SetVisibility(true);
   SpringArm = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
   SpringArm->AttachTo(RootComponent);
-  SpringArm->TargetArmLength = 1000.0f;
+  SpringArm->TargetArmLength = 1500.0f;
   SpringArm->bEnableCameraLag = true;
   SpringArm->SetRelativeRotation(FRotator(-80, 0, 0));
   SpringArm->bDoCollisionTest = false;
@@ -21,12 +25,22 @@ AMapPlayerPawn::AMapPlayerPawn()
   PlayerCamera = CreateDefaultSubobject<UCameraComponent>("PlayerEye");
   PlayerCamera->AttachTo(SpringArm, USpringArmComponent::SocketName);
   PlayerCamera->bUsePawnControlRotation = false;
+
+  /* Moving Phantom Mesh */
+  MovingEntityMesh = CreateDefaultSubobject<UStaticMeshComponent>("PhantomMesh");
+  MovingEntityMesh->AttachTo(RootComponent);
+  MovingEntityMesh->SetVisibility(false);
+  MovingEntityMesh->SetMobility(EComponentMobility::Movable);
+  MovingEntityMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+  TranslucidMaterial = ConstructorHelpers::FObjectFinder<UMaterial>(TEXT("Material'/Game/Materials/M_Transparent.M_Transparent'")).Object;
 }
 
 void AMapPlayerPawn::BeginPlay()
 {
 	Super::BeginPlay();
   RootComponent->SetWorldLocation(FVector::ZeroVector);
+  MovingEntityMesh->SetMaterial(0, UMaterialInstanceDynamic::Create(TranslucidMaterial, this));
 }
 
 void AMapPlayerPawn::Tick( float DeltaTime )

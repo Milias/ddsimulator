@@ -5,31 +5,51 @@
 #include "Components/PrimitiveComponent.h"
 #include "MapBasicEntity.h"
 #include "MapTile.generated.h"
-                           
+
 UCLASS()
-class DDSIMULATOR_API UMapTile : public UStaticMeshComponent
+class DDSIMULATOR_API AMapTile : public AActor
 {
   GENERATED_BODY()
 
 public:
-  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Map)
-  TArray<int32> Index;
+  UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere, Category = Map)
+  FTileIndex Index;
 
-  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Entity)
+  UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = Entity)
+  UStaticMeshComponent * Mesh;
+
+  UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere, Category = Entity)
   FVector RelativePawnLocation;
 
-  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Entity)
+  UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere, Category = Entity)
   TArray<AMapBasicEntity*> AssignedEntity;
 
-  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Map)
-  TArray<UMapTile*> OpenTiles;
+  UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere, Category = Map)
+  TArray<AMapTile*> OpenTiles;
 
-  UMapTile(const FObjectInitializer & PCIP);
-  ~UMapTile() {}
+  UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere, Category = Map)
+  int32 Clearance;
 
-  UFUNCTION(BlueprintCallable, Category = Map)
-  void InitTile(int32 i, int32 j);
+  UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere, Category = Map)
+  bool Transitable;
 
-  UFUNCTION(BlueprintCallable, Category = Map)
+  AMapTile(const FObjectInitializer & PCIP);
+
+  UFUNCTION(BlueprintCallable, Category = Entity)
   FVector EntityPosition();
+
+  UFUNCTION(BlueprintCallable, Category = Map)
+  bool IsTransitable();
+
+  /*
+   * If this tile already contains ent, AssignEntity will remove it.
+   * Otherwise, ent will be Add-ed to AssignedEntity.
+   */
+  UFUNCTION(BlueprintCallable, Category = Entity)
+  void AssignEntity(AMapBasicEntity* Entity);
+
+  UFUNCTION(Server, WithValidation, Reliable)
+  void ServerAssignEntity(AMapBasicEntity* Entity);
+
+  void DoAssignEntity(AMapBasicEntity* Entity);
 };

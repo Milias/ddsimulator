@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>64C0F7A3-7CE8-4B0E-9EC1-49E44CACC276</string>
+	<key>IDESourceControlProjectName</key>
+	<string>DDSimulator</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>293F50D59EDDF1A5E946261F51B1B42BE89B1CCB</key>
+		<string>https://github.com/Milias/ddsimulator.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>DDSimulator.xcodeproj</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>293F50D59EDDF1A5E946261F51B1B42BE89B1CCB</key>
+		<string>../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/Milias/ddsimulator.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>111</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>293F50D59EDDF1A5E946261F51B1B42BE89B1CCB</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>293F50D59EDDF1A5E946261F51B1B42BE89B1CCB</string>
+			<key>IDESourceControlWCCName</key>
+			<string>ddsimulator</string>
+		</dict>
+	</array>
+</dict>
+</plist>

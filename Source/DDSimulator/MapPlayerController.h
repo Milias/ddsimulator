@@ -4,7 +4,12 @@
 
 #include "GameFramework/PlayerController.h"
 #include "MapPlayerPawn.h"
+#include "MapTile.h"
 #include "MapPlayerController.generated.h"
+
+class AMapBasicEntity;
+class APower;
+struct FTileIndex;
 
 UCLASS()
 class DDSIMULATOR_API AMapPlayerController : public APlayerController
@@ -18,9 +23,37 @@ public:
   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CameraInputs)
   float CameraZoomDistance;
 
-  AMapPlayerController(const FObjectInitializer & PCIP);
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CameraInputs)
+  float CameraDragDeadZone;
 
-  virtual void Tick(float dt) override;
+  FVector CameraInitialPosition;
+  FVector2D CameraFirstRightClick;
+  bool PressingRightClick;
+  bool CameraDragging;
+
+  /****** Combat  ******/
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat)
+  bool IsChoosingTargets;
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat)
+  APower const * PowerToLaunch;
+  
+  /*
+  Same logic as power's "Target" variable, but taking into
+  account already selected ones.
+  */
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat)
+  TArray<int32> TargetsToChoose;
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat)
+  TArray<AMapBasicEntity*> TargetableEntities;
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat)
+  TArray<AMapTile*> TargetableTiles;
+
+  AMapPlayerController(const FObjectInitializer & PCIP);
+  
+  virtual void SetupInputComponent() override;
 
   UFUNCTION(BlueprintCallable, Category = CameraInputs)
   void CameraMoveForward(float d);
@@ -31,9 +64,39 @@ public:
   UFUNCTION(BlueprintCallable, Category = CameraInputs)
   void CameraZoomIn(float d);
 
+  UFUNCTION(BlueprintCallable, Category = CameraInputs)
+  void RightClickPressed();
+
+  UFUNCTION(BlueprintCallable, Category = CameraInputs)
+  void RightClickReleased();
+
+  UFUNCTION(BlueprintCallable, Category = CameraInputs)
+  void MouseMoving(float d);
+
   UFUNCTION(BlueprintCallable, Category = Selection)
-  void SelectEntityByIndex(TArray<int32> p);
+  TArray<AMapBasicEntity*> GetEntitiesInTrace();
 
   UFUNCTION(BlueprintCallable, Category = Selection)
   void TraceSelection();
+
+  UFUNCTION(BlueprintCallable, Category = Selection)
+  void SelectEntities(const TArray<AMapBasicEntity*>& Selection);
+
+  UFUNCTION(BlueprintCallable, Category = Movement)
+  AMapTile * GetTileUnderCursor();
+
+  UFUNCTION(BlueprintCallable, Category = Movement)
+  void MoveSelectionToTile(AMapBasicEntity* Entity, const FTileIndex& Tile);
+
+  UFUNCTION(Server, WithValidation, Reliable)
+  void ServerMoveSelectionToTile(AMapBasicEntity* Entity, const FTileIndex& Tile);
+
+  void DoMoveSelectionToTile(AMapBasicEntity* Entity, const FTileIndex& Tile);
+
+  UFUNCTION(BlueprintCallable, Category = Movement)
+  void BeginChooseTargets(AMapBasicEntity * Entity, APower* Power);
+
+
+  UFUNCTION(Server, WithValidation, Reliable)
+  void Spawn();
 };

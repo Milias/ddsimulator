@@ -147,101 +147,18 @@ TArray<AMapBasicEntity*> AMapState::GetNextTurnEntities(int32 n)
   return R;
 }
 
-/*
-Range: same as the one defined in "Power.h".
-Center: origin tile.
-Direction: for blasts,
-  0 - Top
-  1 - Top-right
-  2 - Right
-  3 - Down-right
-  4 - Down
-  5 - Down-left
-  6 - Left
-  7 - Top-left
-*/
-TArray<AMapTile*> AMapState::GetAreaTiles(const AMapBasicEntity* Entity, const TArray<int32>& Range, const AMapTile* Center, int32 EntitySize)
-{
-  TArray<AMapTile*> r; AMapTile* t = NULL;
-  switch (Range[0]) {
-  // Melee
-  case 0:
-    switch (Range[1]) {
-    //Melee weapon
-    case 0:
-      break;
-
-    //Melee touch
-    case -1:
-      break;
-
-    //Melee #
-    default:
-      r.Append(GetTilesInRegion(Range[1], Entity->AssignedTiles[0], EntitySize));
-    }
-    break;
-
-  //Ranged
-  case 1:
-    switch (Range[1]) {
-    //Ranged weapon
-    case 0:
-      break;
-
-    //Ranged sight
-    case -1:
-      break;
-
-    //Ranged #
-    default:
-      r.Append(GetTilesInRegion(Range[1], Entity->AssignedTiles[0], EntitySize));
-    }
-    break;
-
-  //Close
-  case 2:
-    switch (Range[1]) {
-    //Burst
-    case 0:
-      r.Append(GetTilesInRegion(Range[2], Entity->AssignedTiles[0], EntitySize, false));
-      break;
-
-    //Blast
-    case 1:
-      break;
-    }
-    break;
-
-  //AoE
-  case 3:
-    switch (Range[1]) {
-    //AoE burst
-    case 0:
-      if (Entity->GetNearestAssignedTile(Center)->Index.MaxDist(Center->Index) > Range[3]) { break; }
-      r.Append(GetTilesInRegion(Range[2], Center, 1));
-      break;
-
-    //AoE wall
-    case 1:
-      break;
-    }
-    break;
-  }
-  return r;
-}
-
 TArray<AMapTile*> AMapState::GetTilesInRegion(int32 Range, const AMapTile* Center, int32 EntitySize, bool IncludeCenter)
 {
   TArray<AMapTile*> r; AMapTile* t = NULL;
-  for (int32 i = 0; i != Range; i++) {
-    for (int32 j = 0; j != Range; j++) {
-      if (i == 0 && j == 0 && !IncludeCenter) { continue; }
+  for (int32 i = -Range; i <= Range; i++) {
+    for (int32 j = -Range; j <= Range; j++) {
+      if (!IncludeCenter && (i < EntitySize && i >= 0 && j < EntitySize && j >= 0)) { continue; }
       t = Map->UnsafeGetTileFromIndex(Center->Index + FTileIndex(i, j));
       if (t != NULL) { r.AddUnique(t); }
     }
   }
-  for (int32 i = 1; i != EntitySize; i++) {
-    for (int32 j = 0; j != Range + i; j++) {
+  for (int32 i = 1; i < EntitySize; i++) {
+    for (int32 j = -Range; j <= Range + i; j++) {
       t = Map->UnsafeGetTileFromIndex(Center->Index + FTileIndex(j, Range + i));
       if (t != NULL) { r.AddUnique(t); }
       t = Map->UnsafeGetTileFromIndex(Center->Index + FTileIndex(Range + i, j));
@@ -251,7 +168,121 @@ TArray<AMapTile*> AMapState::GetTilesInRegion(int32 Range, const AMapTile* Cente
   return r;
 }
 
-void AMapState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
+TArray<AMapTile*> AMapState::GetTilesInRegion(int32 Range, AMapBasicEntity * Entity, bool IncludeCenter)
+{
+  TArray<AMapTile*> r; AMapTile* t = NULL;
+  for (int32 i = -Range; i <= Range; i++) {
+    for (int32 j = -Range; j <= Range; j++) {
+      if (!IncludeCenter && (i < Entity->EntitySize && i >= 0 && j < Entity->EntitySize && j >= 0)) { continue; }
+      t = Map->UnsafeGetTileFromIndex(Entity->AssignedTiles[0]->Index + FTileIndex(i, j));
+      if (t != NULL) {
+        if (!BresenhamEntityCheck(Entity, t)) { r.Empty(); return r; }
+        r.AddUnique(t);
+      }
+    }
+  }
+  for (int32 i = 1; i < Entity->EntitySize; i++) {
+    for (int32 j = -Range; j <= Range + i; j++) {
+      t = Map->UnsafeGetTileFromIndex(Entity->AssignedTiles[0]->Index + FTileIndex(j, Range + i));
+      if (t != NULL) {
+        if (!BresenhamEntityCheck(Entity, t)) { r.Empty(); return r; }
+        r.AddUnique(t);
+      }
+      t = Map->UnsafeGetTileFromIndex(Entity->AssignedTiles[0]->Index + FTileIndex(Range + i, j));
+      if (t != NULL) {
+        if (!BresenhamEntityCheck(Entity, t)) { r.Empty(); return r; }
+        r.AddUnique(t);
+      }
+    }
+  }
+  return r;
+}
+
+AMapTile * AMapState::Bresenham(AMapTile* Center, AMapTile * Destination, int32 Distance, BresenhamLineType Type)
+{
+  AMapTile * loop = NULL;
+  FTileIndex p = Center->Index;
+  FTileIndex d = Destination->Index - Center->Index;
+  FVector2D p2(p.X, p.Y);
+  float N = d.Max(); if (N == 0) return Center;
+  FTileIndex t = p2;
+  float sx = d.X / N; float sy = d.Y / N;
+  for (int32 i = 0; i < N && (Center->Index.MaxDist(FTileIndex(p2)) < Distance || Distance == -1) && Map->CheckIndex(FTileIndex(p2)); i++) {
+    print(FString::FromInt(p2.X) + " " + FString::FromInt(p2.Y));
+    loop = Map->UnsafeGetTileFromIndex(FTileIndex(p2));
+    if (loop == NULL) {
+      return Map->GetTileFromIndex(t);
+    } else {
+      if (!BresenhamLineCheck(loop, Type)) { return Map->GetTileFromIndex(t); }
+      t = p2;
+      p2.X += sx;
+      p2.Y += sy;
+    }
+  }
+  return loop;
+}
+
+bool AMapState::BresenhamCheck(AMapTile* Center, AMapTile * Destination, int32 Distance, BresenhamLineType Type)
+{
+  AMapTile * loop = NULL;
+  FTileIndex p = Center->Index;
+  FTileIndex d = Destination->Index - Center->Index;
+  FVector2D p2(p.X, p.Y);
+  float N = d.Max(); if (N == 0) return true;
+  FTileIndex t = p2;
+  float sx = d.X / N; float sy = d.Y / N;
+  for (int32 i = 0; i < N && (Center->Index.MaxDist(FTileIndex(p2)) < Distance || Distance == -1); i++) {
+    loop = Map->UnsafeGetTileFromIndex(FTileIndex(p2));
+    if (loop == NULL) {
+      return Destination->Index == t;
+    } else {
+      if (!BresenhamLineCheck(loop, Type)) { return Destination->Index == t; }
+      t = p2;
+      p2.X += sx;
+      p2.Y += sy;
+    }
+  }
+  return Destination->Index == loop->Index;
+}
+
+AMapTile * AMapState::BresenhamEntity(AMapBasicEntity * Entity, AMapTile * Destination, int32 MinDistance, int32 MaxDistance, BresenhamLineType Type)
+{
+  AMapTile * r = Entity->GetMiddleTile(); float dist = r->Index.SqrDist(Destination->Index); AMapTile * t = NULL; float d = 0;
+  for (int32 i = 0; i < Entity->AssignedTiles.Num(); i++) {
+    t = Bresenham(Entity->AssignedTiles[i], Destination, MaxDistance, Type); d = t->Index.SqrDist(Destination->Index);
+    if (MinDistance != -1) {
+      for (int32 j = 0; j < Entity->AssignedTiles.Num(); j++) {
+        if (t->Index.MaxDist(Entity->AssignedTiles[i]->Index) < MinDistance) { return NULL; }
+      }
+    }
+    if (d < dist) { r = t; dist = d; }
+  }
+  return r;
+}
+
+bool AMapState::BresenhamEntityCheck(AMapBasicEntity * Entity, AMapTile * Destination, int32 MaxDistance, BresenhamLineType Type)
+{
+  for (int32 i = 0; i < Entity->AssignedTiles.Num(); i++) {
+    if (!BresenhamCheck(Entity->AssignedTiles[i], Destination, MaxDistance, Type)) return false;
+  }
+  return true;
+}
+
+bool AMapState::BresenhamLineCheck(AMapTile * Tile, BresenhamLineType Type)
+{
+  if (Type == Nothing) {
+    return true;
+  } else if (Type == Transitable) {
+    return Tile->IsTransitable();
+  } else if (Type == LineOfSight) {
+    return Tile->LineOfSight;
+  } else if (Type == LineOfEffect) {
+    return Tile->LineOfEffect;
+  }
+  return false;
+}
+
+void AMapState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
   DOREPLIFETIME(AMapState, Map);
   DOREPLIFETIME(AMapState, MapEntities);

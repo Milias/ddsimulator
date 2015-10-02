@@ -17,5 +17,8 @@ public:
 
   AMapPlayerState(const FObjectInitializer & PCIP);
 
+  UFUNCTION(Server, Reliable, WithValidation)
+  void CastPower(APower* Power, const TArray<AMapBasicEntity*>& EntityTarget, const TArray<AMapTile*>& TileTarget);
+
   virtual void Tick(float dt) override;
 };

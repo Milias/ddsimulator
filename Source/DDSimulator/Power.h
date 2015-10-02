@@ -6,6 +6,7 @@
 #include "Power.generated.h"
 
 class AMapBasicEntity;
+class AMapTile;
 
 USTRUCT()
 struct FPowerData
@@ -27,14 +28,17 @@ struct FPowerData
   UPROPERTY(EditAnywhere, BlueprintReadWrite)
   FText FlavorText;
 
+  //"attack", "utility"
   UPROPERTY(EditAnywhere, BlueprintReadWrite)
-  FString Kind; //"attack", "utility"
+  FString Kind;
 
+  //"at-will", "encounter", "daily", "recharge#"
   UPROPERTY(EditAnywhere, BlueprintReadWrite)
-  FString Usage; //"at-will", "encounter", "daily", "recharge#"
+  FString Usage;
 
+  //"standard", "minor", "movement", "free", "interrupt", "reaction", "trigger"
   UPROPERTY(EditAnywhere, BlueprintReadWrite)
-  FString ActionType; //"standard", "minor", "movement", "free", "interrupt", "reaction", "trigger"
+  FString ActionType;
 
   UPROPERTY(EditAnywhere, BlueprintReadWrite)
   TArray<FString> Keywords;
@@ -132,11 +136,11 @@ public:
   void DoInitialize(int32 UID);
 
   UFUNCTION(BlueprintCallable, Category = Power)
-  void PowerAction(const TArray<AMapBasicEntity*>& Targets);
+  void PowerAction(const TArray<AMapBasicEntity*>& EntityTarget, const TArray<AMapTile*>& TileTarget);
 
   UFUNCTION(Server, WithValidation, Reliable)
-  void ServerPowerAction(const TArray<AMapBasicEntity*>& Targets);
+  void ServerPowerAction(const TArray<AMapBasicEntity*>& Targets, const TArray<AMapTile*>& TileTarget);
 
   UFUNCTION(BlueprintNativeEvent)
-  void DoPowerAction(const TArray<AMapBasicEntity*>& Targets);
+  void DoPowerAction(const TArray<AMapBasicEntity*>& Targets, const TArray<AMapTile*>& TileTarget);
 };

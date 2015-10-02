@@ -38,8 +38,10 @@ void AMapBase::CreateBasicGridMap_Implementation(FVector Position, int32 MapWidt
       MapTiles[i + MapWidth*j]->Index(j, i);
       MapTiles[i + MapWidth*j]->AttachRootComponentTo(MapComponent, "MapTile");
       MapTiles[i + MapWidth*j]->SetActorLocation(FVector(j*TileHeight, i*TileWidth, 0));
-      if (i==j && i == MapWidth/2) {
-        MapTiles[i + MapWidth*j]->SetActorLocation(FVector(j*TileHeight, i*TileWidth, 100));
+      if (i == j && i == MapWidth / 2) {
+        MapTiles[i + MapWidth*j]->Transitable = false;
+        MapTiles[i + MapWidth*j]->SetActorLocation(FVector(j*TileHeight, i*TileWidth, 50));
+
       }
     }
   }

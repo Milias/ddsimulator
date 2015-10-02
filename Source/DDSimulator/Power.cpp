@@ -13,7 +13,7 @@ APower::APower() : OwnerEntity(NULL), IsInitialized(false)
 
 void APower::SetOwnerEntity(AMapBasicEntity * Entity)
 {
-  if (OwnerEntity != NULL) { return; }
+  if (OwnerEntity != NULL || GetOwner() != NULL) { return; }
   if (Role < ROLE_Authority) {
     ServerSetOwnerEntity(Entity);
   } else {
@@ -23,7 +23,7 @@ void APower::SetOwnerEntity(AMapBasicEntity * Entity)
 
 void APower::ServerSetOwnerEntity_Implementation(AMapBasicEntity * Entity)
 {
-  if (OwnerEntity != NULL) { return; }
+  if (OwnerEntity != NULL || GetOwner() != NULL) { return; }
   DoSetOwnerEntity(Entity);
 }
 
@@ -63,34 +63,34 @@ bool APower::ServerInitialize_Validate(int32 UID)
 void APower::DoInitialize(int32 UID)
 {
   Data = Cast<AMapState>(GetWorld()->GameState)->PowersDB->GetPowerByUID(UID);
-  print(Data.Name);
   IsInitialized = true;
 }
 
-void APower::PowerAction(const TArray<AMapBasicEntity*>& Targets)
+void APower::PowerAction(const TArray<AMapBasicEntity*>& Targets, const TArray<AMapTile*>& TileTarget)
 {
   if (!IsInitialized) { return; }
+  print(FString::FromInt(Role));
   if (Role < ROLE_Authority) {
-    ServerPowerAction(Targets);
+    ServerPowerAction(Targets, TileTarget);
   } else {
-    DoPowerAction(Targets);
+    DoPowerAction(Targets, TileTarget);
   }
 }
 
-void APower::ServerPowerAction_Implementation(const TArray<AMapBasicEntity*>& Targets)
+void APower::ServerPowerAction_Implementation(const TArray<AMapBasicEntity*>& Targets, const TArray<AMapTile*>& TileTarget)
 {
   if (!IsInitialized) { return; }
-  DoPowerAction(Targets);
+  DoPowerAction(Targets, TileTarget);
 }
 
-bool APower::ServerPowerAction_Validate(const TArray<AMapBasicEntity*>& Targets)
+bool APower::ServerPowerAction_Validate(const TArray<AMapBasicEntity*>& Targets, const TArray<AMapTile*>& TileTarget)
 {
-  return true;
+  return false;
 }
 
-void APower::DoPowerAction_Implementation(const TArray<AMapBasicEntity*>& Targets)
+void APower::DoPowerAction_Implementation(const TArray<AMapBasicEntity*>& Targets, const TArray<AMapTile*>& TileTarget)
 {
-  print("Power " + Data.Name + " launched.");
+  print("Power " + Data.Name + " casted on " + FString::FromInt(Targets.Num()) + " targets.");
 }
 
 void APower::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const

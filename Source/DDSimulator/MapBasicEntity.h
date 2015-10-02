@@ -26,13 +26,16 @@ struct FTileIndex
 
   FTileIndex operator+(const FTileIndex& a) const { return FTileIndex(X + a.X, Y + a.Y); }
   FTileIndex operator-(const FTileIndex& a) const { return FTileIndex(X - a.X, Y - a.Y); }
+  FTileIndex operator/(const float f) const { return FTileIndex(X / f, Y / f); }
   FTileIndex& operator=(const FTileIndex& a) { X = a.X; Y = a.Y; f_score = a.f_score; g_score = a.g_score; parent = a.parent; return *this; }
   FTileIndex& operator=(const TArray<int32>& a) { X = a[0]; Y = a[1]; return *this; }
+  FTileIndex& operator=(const FVector2D& a) { X = roundf(a.X); Y = roundf(a.Y); return *this; }
   bool operator<(const FTileIndex& a) { return g_score < a.g_score; }
   bool operator>(const FTileIndex& a) { return g_score > a.g_score; }
   bool operator==(const FTileIndex& a) const { return X == a.X && Y == a.Y; }
 
-  int32 MaxDist(const FTileIndex& a) const { return std::max<int32>(abs(X - a.X), abs(Y - a.Y)); }
+  int32 Max() const { return std::max(abs(X), abs(Y)); }
+  int32 MaxDist(const FTileIndex& a) const { return std::max(abs(X - a.X), abs(Y - a.Y)); }
   int32 AbsDist(const FTileIndex& a) const { return abs(X - a.X) + abs(Y - a.Y); }
   float SqrDist(const FTileIndex& a) const { return (X - a.X)*(X - a.X) + (Y - a.Y)*(Y - a.Y); }
   void ResetScores() { f_score = 0; g_score = 0; parent = NULL; }
@@ -40,6 +43,7 @@ struct FTileIndex
 
   FTileIndex(int32 x = 0, int32 y = 0) : X(x), Y(y), f_score(0), g_score(0), parent(NULL) {}
   FTileIndex(const FTileIndex& a) { X = a.X; Y = a.Y; f_score = a.f_score; g_score = a.g_score; parent = a.parent; }
+  FTileIndex(const FVector2D& a) { X = roundf(a.X); Y = roundf(a.Y); }
 };
 
 USTRUCT()
@@ -137,6 +141,9 @@ public:
   TArray<FTileIndex> ProposedMovingTiles;
 
   UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadWrite, Category = Entity)
+  int32 CenterTile;
+
+  UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadWrite, Category = Entity)
   FVector CenterLocation;
 
   UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
@@ -191,6 +198,12 @@ public:
   void ServerAssignTiles(const TArray<AMapTile*>& tiles);
 
   void DoAssignTiles(const TArray<AMapTile*>& tiles);
+
+  UFUNCTION(BlueprintCallable, Category = Map)
+  bool UsingTiles(const TArray<AMapTile*>& tiles);
+
+  UFUNCTION(BlueprintCallable, Category = Map)
+  AMapTile * GetMiddleTile();
 
   /******* Movement *******/
 

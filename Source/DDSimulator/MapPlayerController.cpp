@@ -8,6 +8,7 @@
 
 AMapPlayerController::AMapPlayerController(const FObjectInitializer & PCIP) : Super(PCIP), CameraMoveDistance(20), CameraZoomDistance(50), CameraDragDeadZone(10)
 {
+  LastTileUnderCursor = NULL;
   SetupInputComponent();
 }
 
@@ -23,6 +24,7 @@ void AMapPlayerController::SetupInputComponent()
   InputComponent->BindAction("SelectEntity", IE_Pressed, this, &AMapPlayerController::TraceSelection);
   InputComponent->BindAction("RightClick", EInputEvent::IE_Pressed, this, &AMapPlayerController::RightClickPressed);
   InputComponent->BindAction("RightClick", EInputEvent::IE_Released, this, &AMapPlayerController::RightClickReleased);
+  InputComponent->BindAction("StopChoosingTargets", EInputEvent::IE_Released, this, &AMapPlayerController::ResetChoosing);
 
   InputComponent->BindAction("Spawn", EInputEvent::IE_Pressed, this, &AMapPlayerController::Spawn);
 }
@@ -66,18 +68,22 @@ void AMapPlayerController::RightClickPressed()
 
 void AMapPlayerController::RightClickReleased()
 {
-  /** Movin' entity **/
-  if (Cast<AMapPlayerState>(PlayerState) != NULL && Cast<AMapHUD>(MyHUD)->MovingEntity) {
-    TArray<AMapBasicEntity*>& SelectedEntity = Cast<AMapPlayerState>(PlayerState)->SelectedEntity;
-    if (SelectedEntity.Num() == 1 && !CameraDragging) {
-      AMapTile * tile = GetTileUnderCursor();
-      if (tile) { MoveSelectionToTile(SelectedEntity[0], tile->Index); }
+  if (Cast<AMapPlayerState>(PlayerState) != NULL) {
+    /** Movin' entity **/
+    if (Cast<AMapHUD>(MyHUD)->MovingEntity) {
+      TArray<AMapBasicEntity*>& SelectedEntity = Cast<AMapPlayerState>(PlayerState)->SelectedEntity;
+      if (SelectedEntity.Num() == 1 && !CameraDragging) {
+        AMapTile * tile = GetTileUnderCursor();
+        if (tile) { MoveSelectionToTile(SelectedEntity[0], tile->Index); }
+      }
     }
   }
 
   PressingRightClick = false;
   CameraDragging = false;
   bShowMouseCursor = true;
+
+  SetInputMode(FInputModeGameAndUI());
 }
 
 void AMapPlayerController::MouseMoving(float d)
@@ -85,12 +91,16 @@ void AMapPlayerController::MouseMoving(float d)
   if (Cast<AMapPlayerPawn>(GetPawn()) == NULL || Cast<AMapPlayerState>(PlayerState) == NULL) { return; }
 
   float x; float y; FVector2D CurrentPosition; AMapPlayerPawn * pawn = NULL; TArray<AMapBasicEntity*>* SelectedEntity = NULL;
+  AMapState * mapState = NULL; AMapTile * tile = NULL; TArray<AMapBasicEntity*> entities;
 
   if (PressingRightClick || Cast<AMapHUD>(MyHUD)->MovingEntity || IsChoosingTargets) {
     GetMousePosition(x, y);
     CurrentPosition = FVector2D(x, y);
     pawn = Cast<AMapPlayerPawn>(GetPawn());
     SelectedEntity = &Cast<AMapPlayerState>(PlayerState)->SelectedEntity;
+    mapState = Cast<AMapState>(GetWorld()->GameState);
+    tile = GetTileUnderCursor();
+    entities = GetEntitiesInTrace();
   }
 
   if (PressingRightClick) {
@@ -106,7 +116,8 @@ void AMapPlayerController::MouseMoving(float d)
   }
 
   if (Cast<AMapHUD>(MyHUD)->MovingEntity && !(*SelectedEntity)[0]->EntityMoving) {
-    AMapTile * tile = GetTileUnderCursor();
+    if (tile == LastTileUnderCursor) { return; }
+    LastTileUnderCursor = tile;
     if (tile) {
       if (tile->Clearance >= (*SelectedEntity)[0]->EntitySize) {
         pawn->MovingEntityMesh->SetStaticMesh((*SelectedEntity)[0]->Mesh->StaticMesh);
@@ -116,9 +127,20 @@ void AMapPlayerController::MouseMoving(float d)
     }
   } else { Cast<AMapPlayerPawn>(GetPawn())->MovingEntityMesh->SetVisibility(false); }
 
-  if (IsChoosingTargets) {
-    AMapTile * tile = GetTileUnderCursor();
-    if (tile) {
+  if (IsChoosingTargets && tile != LastTileUnderCursor) {
+    LastTileUnderCursor = tile;
+    if (tile && PowerToLaunch->Data.Range[0] == 2 && PowerToLaunch->Data.Range[1] == 1) {
+      AMapTile * dest = NULL;
+      for (int32 i = 0; i < TargetableTiles.Num(); i++) { TargetableTiles[i]->AddActorLocalOffset(FVector(0, 0, 20)); }
+      TargetableTiles.Empty();
+      if (CastingEntity->AssignedTiles.Contains(tile)) { return; }
+      dest = mapState->Bresenham(CastingEntity->GetMiddleTile(), tile, PowerToLaunch->Data.Range[2] / 2 + 1,  Nothing);
+      if (dest != NULL) {
+        AMapTile * nearest = NULL;
+        AMapTile * t = NULL;
+        TargetableTiles = mapState->GetTilesInRegion(PowerToLaunch->Data.Range[2], dest, 1);
+        for (int32 i = 0; i < TargetableTiles.Num(); i++) { TargetableTiles[i]->AddActorLocalOffset(FVector(0, 0, -20)); }
+      }
     }
   }
 }
@@ -142,7 +164,50 @@ TArray<AMapBasicEntity*> AMapPlayerController::GetEntitiesInTrace()
 
 void AMapPlayerController::TraceSelection()
 {
-  SelectEntities(GetEntitiesInTrace());
+  if (IsChoosingTargets) {
+    /** ChoosingTarget **/
+    TArray<AMapBasicEntity*>& SelectedEntity = Cast<AMapPlayerState>(PlayerState)->SelectedEntity;
+    if (SelectedEntity.Num() == 1 && !CameraDragging) {
+      if (PowerToLaunch->Data.Range[0] == 2 && PowerToLaunch->Data.Range[1] == 1 && TargetableTiles.Num() > 0) {
+        
+        if (PowerToLaunch->Data.Target[0] != 0 || PowerToLaunch->Data.Target[1] != 0 || PowerToLaunch->Data.Target[2] != 0) {
+          for (int32 i = 0; i != TargetableTiles.Num(); i++) {
+            for (int32 j = 0; j != TargetableTiles[i]->AssignedEntity.Num(); j++) {
+              Target(TargetableTiles[i]->AssignedEntity[j]);
+            }
+          }
+        }
+
+        if (PowerToLaunch->Data.Target[3] != 0) {
+          for (int32 i = 0; i != TargetableTiles.Num(); i++) {
+            Target(TargetableTiles[i]);
+          }
+        }
+
+        EndChooseTargets();
+
+      } else {
+
+        AMapTile * tile = GetTileUnderCursor();
+        TArray<AMapBasicEntity*> entities = GetEntitiesInTrace();
+
+        if (entities.Num() > 0) {
+
+          if (PowerToLaunch->Data.Target[0] != 0 || PowerToLaunch->Data.Target[1] != 0 || PowerToLaunch->Data.Target[2] != 0) {
+            for (int32 i = 0; i != entities.Num(); i++) { Target(entities[i]); }
+          }
+
+        } else if (tile) {
+
+          if (PowerToLaunch->Data.Target[3] != 0) { Target(tile); }
+          if (PowerToLaunch->Data.Target[0] != 0 || PowerToLaunch->Data.Target[1] != 0 || PowerToLaunch->Data.Target[2] != 0) {
+            for (int32 i = 0; i != tile->AssignedEntity.Num(); i++) { Target(tile->AssignedEntity[i]); }
+          }
+
+        }
+      }
+    }
+  } else { SelectEntities(GetEntitiesInTrace()); }
 }
 
 void AMapPlayerController::SelectEntities(const TArray<AMapBasicEntity*>& Selection)
@@ -204,27 +269,168 @@ void AMapPlayerController::DoMoveSelectionToTile(AMapBasicEntity* Entity, const 
 void AMapPlayerController::BeginChooseTargets(AMapBasicEntity * Entity, APower* Power)
 {
   if (IsChoosingTargets) { return; }
-  PowerToLaunch = Power; TargetsToChoose = Power->Data.Target;
-  TargetableTiles.Empty(); TargetableEntities.Empty(); TargetsToChoose.SetNumZeroed(4);
+  ResetChoosing();
+  IsChoosingTargets = true;
+  PowerToLaunch = Power;
+  CastingEntity = Entity;
   switch (Power->Data.Range[0]) {
   case -1:
-    TargetableEntities.Add(Entity);
+    TargetedEntities.Add(Entity);
     IsChoosingTargets = false;
-    Power->PowerAction(TargetableEntities);
+    Power->PowerAction(TargetedEntities, TargetedTiles);
     break;
 
   case 0:
-    switch (Power->Data.Range[1]) {
-    case 0:
-      break;
+    ChooseTargetsMelee(Entity, Power);
+    break;
 
-    case -1:
-      break;
+  case 1:
+    ChooseTargetsRanged(Entity, Power);
+    break;
 
-    default:
-      break;
+  case 2:
+    ChooseTargetsClose(Entity, Power);
+    break;
+
+  case 3:
+    ChooseTargetsArea(Entity, Power);
+    break;
+  };
+  for (int i = 0; i < TargetableTiles.Num(); i++) { TargetableTiles[i]->AddActorLocalOffset(FVector(0, 0, -20)); }
+}
+
+void AMapPlayerController::EndChooseTargets()
+{
+  if (!IsChoosingTargets) { return; }
+  
+  if (CheckCanCast()) {
+    Cast<AMapPlayerState>(PlayerState)->CastPower(PowerToLaunch, TargetedEntities, TargetedTiles);
+    ResetChoosing();
+  }
+}
+
+bool AMapPlayerController::CheckCanCast()
+{
+  if (!IsChoosingTargets) { return false; }
+  int n = 0;
+  for (int i = 0; i < 4; i++) {
+    if (PowerToLaunch->Data.Target[i] == 0 && TargetsToChoose[i] == 0) {
+      n++;
+    } else if (PowerToLaunch->Data.Target[i] < 0 && TargetsToChoose[i] == -PowerToLaunch->Data.Target[i] && PowerToLaunch->Data.Target[i] != -1) {
+      n++;
+    } else if (PowerToLaunch->Data.Target[i] > 0 && TargetsToChoose[i] <= PowerToLaunch->Data.Target[i] && TargetsToChoose[i] > 0) {
+      n++;
+    } else if (PowerToLaunch->Data.Target[i] == -1) {
+      n++;
     }
   }
+  return n == 4;
+}
+
+void AMapPlayerController::ChooseTargetsMelee(AMapBasicEntity * Entity, APower * Power)
+{
+  AMapState* mapstate = Cast<AMapState>(GetWorld()->GameState);
+  
+  switch (Power->Data.Range[1]) {
+  case -1:
+    break;
+
+  case 0:
+    break;
+
+  default:
+    TargetableTiles = mapstate->GetTilesInRegion(Power->Data.Range[1], Entity->AssignedTiles[0], Entity->EntitySize, false);
+    if (Power->Data.Target[0] == -1) {
+      for (int i = 0; i != TargetableTiles.Num(); i++) {
+        for (int j = 0; j != TargetableTiles[i]->AssignedEntity.Num(); j++) {
+          Target(TargetableTiles[i]->AssignedEntity[j], true);
+        }
+      }
+    }
+    if (Power->Data.Target[3] == -1) {
+      for (int i = 0; i != TargetableTiles.Num(); i++) { Target(TargetableTiles[i], true); }
+    }
+    break;
+  };
+} 
+
+void AMapPlayerController::ChooseTargetsRanged(AMapBasicEntity * Entity, APower * Power)
+{
+  AMapState* mapstate = Cast<AMapState>(GetWorld()->GameState);
+
+  switch (Power->Data.Range[1]) {
+  case -1:
+    break;
+
+  case 0:
+    break;
+
+  default:
+    TargetableTiles = mapstate->GetTilesInRegion(Power->Data.Range[1], Entity->AssignedTiles[0], Entity->EntitySize, false);
+    if (Power->Data.Target[0] == -1) {
+      for (int i = 0; i != TargetableTiles.Num(); i++) {
+        for (int j = 0; j != TargetableTiles[i]->AssignedEntity.Num(); j++) {
+          Target(TargetableTiles[i]->AssignedEntity[j], true);
+        }
+      }
+    }
+    if (Power->Data.Target[3] == -1) {
+      for (int i = 0; i != TargetableTiles.Num(); i++) { Target(TargetableTiles[i], true); }
+    }
+    break;
+  };
+}
+
+void AMapPlayerController::ChooseTargetsClose(AMapBasicEntity * Entity, APower * Power)
+{
+  AMapState* mapstate = Cast<AMapState>(GetWorld()->GameState);
+
+  if (Power->Data.Range[1] == 0) {
+    TargetableTiles = mapstate->GetTilesInRegion(Power->Data.Range[2], Entity->AssignedTiles[0], Entity->EntitySize, false);
+  }
+}
+
+void AMapPlayerController::ChooseTargetsArea(AMapBasicEntity * Entity, APower * Power)
+{
+
+}
+
+void AMapPlayerController::Target(AMapBasicEntity* Entity, bool ForceAdd)
+{
+  bool contains = TargetedEntities.Contains(Entity);
+  if (contains && !ForceAdd && (PowerToLaunch->Data.Target[0] != -1 && PowerToLaunch->Data.Target[1] != -1 && PowerToLaunch->Data.Target[2] != -1)) {
+    TargetedEntities.Remove(Entity);
+    TargetsToChoose[0]--;
+  } else if (Entity->UsingTiles(TargetableTiles) && (TargetsToChoose[0] < abs(PowerToLaunch->Data.Target[0]) || PowerToLaunch->Data.Target[0] == -1)) {
+    if (!contains) {
+      TargetedEntities.Add(Entity);
+      TargetsToChoose[0]++;
+    }
+  }
+}
+
+void AMapPlayerController::Target(AMapTile* Tile, bool ForceAdd)
+{
+  bool contains = TargetedTiles.Contains(Tile);
+  if (contains && !ForceAdd && PowerToLaunch->Data.Target[3] != -1) {
+    TargetedTiles.Remove(Tile);
+    TargetsToChoose[3]--;
+  } else if ((TargetsToChoose[3] < abs(PowerToLaunch->Data.Target[3]) || PowerToLaunch->Data.Target[3] == -1) && TargetableTiles.Contains(Tile)) {
+    if (!contains) {
+      TargetedTiles.Add(Tile);
+      TargetsToChoose[3]++;
+    }
+  }
+}
+
+void AMapPlayerController::ResetChoosing()
+{
+  PowerToLaunch = NULL; CastingEntity = NULL;
+  for (int i = 0; i < TargetableTiles.Num(); i++) { TargetableTiles[i]->AddActorLocalOffset(FVector(0, 0, 20)); }
+  TargetableTiles.Empty(); TargetedEntities.Empty(); TargetedTiles.Empty(); 
+  if (TargetsToChoose.Num() != 4) { TargetsToChoose.SetNumZeroed(4); }
+  else { for (int i = 0; i < 4; i++) { TargetsToChoose[i] = 0; } }
+  IsChoosingTargets = false;
 }
 
 bool AMapPlayerController::Spawn_Validate()
@@ -234,7 +440,9 @@ bool AMapPlayerController::Spawn_Validate()
 
 void AMapPlayerController::Spawn_Implementation()
 {
-  GetWorld()->SpawnActor<AMapBasicEntity>(AMapBasicEntity::StaticClass())->Register(GetName(), FTileIndex(), 1);
-  GetWorld()->SpawnActor<AMapBasicEntity>(AMapBasicEntity::StaticClass())->Register(GetName(), FTileIndex(), 2);
-  GetWorld()->SpawnActor<AMapBasicEntity>(AMapBasicEntity::StaticClass())->Register(GetName(), FTileIndex(), 3);
+  FActorSpawnParameters t;
+  t.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+  GetWorld()->SpawnActor<AMapBasicEntity>(AMapBasicEntity::StaticClass(),t)->Register(GetName(), FTileIndex(), 1);
+  GetWorld()->SpawnActor<AMapBasicEntity>(AMapBasicEntity::StaticClass(),t)->Register(GetName(), FTileIndex(), 2);
+  GetWorld()->SpawnActor<AMapBasicEntity>(AMapBasicEntity::StaticClass(),t)->Register(GetName(), FTileIndex(), 3);
 }

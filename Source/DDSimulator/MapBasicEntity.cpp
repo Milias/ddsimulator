@@ -85,14 +85,28 @@ bool AMapBasicEntity::ServerAssignTiles_Validate(const TArray<AMapTile*>& tiles)
 void AMapBasicEntity::DoAssignTiles(const TArray<AMapTile*>& tiles)
 {
   CenterLocation = FVector::ZeroVector;
-  for (auto it = tiles.CreateConstIterator(); it; ++it) {
-    (*it)->AssignEntity(this);
-    CenterLocation += (*it)->EntityPosition();
+  for (int32 i = 0; i < tiles.Num(); i++) {
+    tiles[i]->AssignEntity(this);
+    CenterLocation += tiles[i]->EntityPosition();
   }
   CenterLocation /= tiles.Num();
   NextCenterLocation = CenterLocation;
   AssignedTiles.Append(tiles);
   SetActorLocation(CenterLocation);
+}
+
+bool AMapBasicEntity::UsingTiles(const TArray<AMapTile*>& tiles)
+{
+  for (int i = 0; i != AssignedTiles.Num(); i++) {
+    for (int j = 0; j != tiles.Num(); j++) {
+      if (AssignedTiles[i]->Index == tiles[j]->Index) return true;
+    }
+  } return false;
+}
+
+AMapTile* AMapBasicEntity::GetMiddleTile()
+{
+  return AssignedTiles[CenterTile];
 }
 
 void AMapBasicEntity::MoveTo(const TArray<FTileIndex>& steps)
@@ -184,7 +198,7 @@ void AMapBasicEntity::DoReconstructPath(const FTileIndex& dest, const FTileIndex
 
 void AMapBasicEntity::DoFindPathTo(const FTileIndex& Tile)
 {
-  if (AssignedTiles[0]->Index == Tile) { return; }
+  if (GetMiddleTile()->Index == Tile) { return; }
 
   float g;
   AMapBase * map = Cast<AMapState>(GetWorld()->GameState)->Map;
@@ -197,7 +211,7 @@ void AMapBasicEntity::DoFindPathTo(const FTileIndex& Tile)
   open.Add(start);
   open[0]->f_score = open[0]->SqrDist(Tile);
 
-  FTileIndex* current = open[0]; 
+  FTileIndex* current = open[0];
 
   while (open.Num()) {
     if (open.Num() == 1) { current = open[0]; } else { current = GetLowest(open); }
@@ -433,16 +447,15 @@ void AMapBasicEntity::DoRegister(const FString& owner, const FTileIndex& pos, in
   for (int32 i = 0; i < size; i++) {
     for (int32 j = 0; j < size; j++) {
       tiles.Add(Cast<AMapState>(GetWorld()->GameState)->Map->GetTileFromIndex(pos + FTileIndex(i, j)));
+      if (i == j && i == (size - 1) / 2) { CenterTile = tiles.Num() - 1; }
     }
   }
 
   AssignTiles(tiles);
   Cast<AMapState>(GetWorld()->GameState)->MapEntities.Add(this);
 
-  for (int32 i = 0; i != 20; i++) {
-    EntityPowers.Add(GetWorld()->SpawnActor<APower>());
-    EntityPowers[i]->Initialize(0);
-  }
+  TArray<int32> t; t.SetNum(3); t[0] = 100; t[1] = 100; t[2] = 100;
+  LoadPowers(t);
 }
 
 void AMapBasicEntity::UnRegister()
@@ -483,6 +496,7 @@ void AMapBasicEntity::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & O
   DOREPLIFETIME(AMapBasicEntity, MovingTime);
   DOREPLIFETIME(AMapBasicEntity, MaxMovingTime);
   DOREPLIFETIME(AMapBasicEntity, CenterLocation);
+  DOREPLIFETIME(AMapBasicEntity, CenterTile);
   DOREPLIFETIME(AMapBasicEntity, NextCenterLocation);
   DOREPLIFETIME(AMapBasicEntity, StopMovement);
   DOREPLIFETIME(AMapBasicEntity, EntitySize);

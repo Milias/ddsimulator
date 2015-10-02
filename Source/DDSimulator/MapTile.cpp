@@ -3,7 +3,7 @@
 #include "DDSimulator.h"
 #include "MapTile.h"
 
-AMapTile::AMapTile(const FObjectInitializer & PCIP) : Super(PCIP), Index(FTileIndex()), RelativePawnLocation(FVector(0, 0, 100)), Clearance(0), Transitable(true)
+AMapTile::AMapTile(const FObjectInitializer & PCIP) : Super(PCIP), Index(FTileIndex()), RelativePawnLocation(FVector(0, 0, 100)), Clearance(0), Transitable(true), LineOfSight(true), LineOfEffect(true)
 {
   PrimaryActorTick.bCanEverTick = true;
   bReplicates = true;
@@ -61,5 +61,6 @@ void AMapTile::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifet
   DOREPLIFETIME(AMapTile, OpenTiles);
   DOREPLIFETIME(AMapTile, Clearance);
   DOREPLIFETIME(AMapTile, Transitable);
+  DOREPLIFETIME(AMapTile, LineOfSight);
+  DOREPLIFETIME(AMapTile, LineOfEffect);
 }
-

@@ -31,22 +31,30 @@ public:
   bool PressingRightClick;
   bool CameraDragging;
 
+  AMapTile* LastTileUnderCursor;
+
   /****** Combat  ******/
   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat)
   bool IsChoosingTargets;
 
   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat)
-  APower const * PowerToLaunch;
+  APower * PowerToLaunch;
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat)
+  AMapBasicEntity * CastingEntity;
   
   /*
   Same logic as power's "Target" variable, but taking into
-  account already selected ones.
+  account already selected entities.
   */
   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat)
   TArray<int32> TargetsToChoose;
 
   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat)
-  TArray<AMapBasicEntity*> TargetableEntities;
+  TArray<AMapBasicEntity*> TargetedEntities;
+
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat)
+  TArray<AMapTile*> TargetedTiles;
 
   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat)
   TArray<AMapTile*> TargetableTiles;
@@ -93,9 +101,25 @@ public:
 
   void DoMoveSelectionToTile(AMapBasicEntity* Entity, const FTileIndex& Tile);
 
-  UFUNCTION(BlueprintCallable, Category = Movement)
+  UFUNCTION(BlueprintCallable, Category = Combat)
   void BeginChooseTargets(AMapBasicEntity * Entity, APower* Power);
 
+  UFUNCTION(BlueprintCallable, Category = Combat)
+  void EndChooseTargets();
+  
+  UFUNCTION(BlueprintCallable, Category = Combat)
+  bool CheckCanCast();
+
+  void ChooseTargetsMelee(AMapBasicEntity * Entity, APower* Power);
+  void ChooseTargetsRanged(AMapBasicEntity * Entity, APower* Power);
+  void ChooseTargetsClose(AMapBasicEntity * Entity, APower* Power);
+  void ChooseTargetsArea(AMapBasicEntity * Entity, APower* Power);
+
+  void Target(AMapBasicEntity* Entity, bool ForceAdd = false);
+  void Target(AMapTile* Tile, bool ForceAdd = false);
+
+  UFUNCTION(BlueprintCallable, Category = Combat)
+  void ResetChoosing();
 
   UFUNCTION(Server, WithValidation, Reliable)
   void Spawn();

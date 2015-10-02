@@ -7,6 +7,14 @@
 #include "MapPlayerState.h"
 #include "MapState.generated.h"
 
+UENUM()
+enum BresenhamLineType {
+  Nothing = 0,
+  Transitable = 1,
+  LineOfEffect = 2,
+  LineOfSight = 4
+};
+
 USTRUCT()
 struct FBattleData {
   GENERATED_USTRUCT_BODY()
@@ -142,8 +150,25 @@ public:
   UFUNCTION(BlueprintCallable, Category = Combat)
   TArray<AMapBasicEntity*> GetNextTurnEntities(int32 n);
 
-  UFUNCTION(BlueprintCallable, Category = Combat)
-  TArray<AMapTile*> GetAreaTiles(const AMapBasicEntity* Entity, const TArray<int32>& Range, const AMapTile* Center, int32 EntitySize);
-
   TArray<AMapTile*> GetTilesInRegion(int32 Range, const AMapTile* Center, int32 EntitySize, bool IncludeCenter = true);
+  TArray<AMapTile*> GetTilesInRegion(int32 Range, AMapBasicEntity * Entity, bool IncludeCenter = true);
+
+  /*
+    SightCheck:
+      0 - Nothing
+      1 - Transitable
+  */
+  UFUNCTION(BlueprintCallable, Category = Combat)
+  AMapTile * Bresenham(AMapTile* Center, AMapTile * Destination, int32 Distance = -1, BresenhamLineType Type = Nothing);
+
+  UFUNCTION(BlueprintCallable, Category = Combat)
+  bool BresenhamCheck(AMapTile* Center, AMapTile * Destination, int32 Distance = -1, BresenhamLineType Type = Nothing);
+  
+  UFUNCTION(BlueprintCallable, Category = Combat)
+  AMapTile * BresenhamEntity(AMapBasicEntity * Entity, AMapTile * Destination, int32 MinDistance = -1, int32 MaxDistance = -1, BresenhamLineType Type = Nothing);
+  
+  UFUNCTION(BlueprintCallable, Category = Combat)
+  bool BresenhamEntityCheck(AMapBasicEntity * Entity, AMapTile * Destination, int32 MaxDistance = -1, BresenhamLineType Type = Nothing);
+
+  bool BresenhamLineCheck(AMapTile * Tile, BresenhamLineType Type);
 };

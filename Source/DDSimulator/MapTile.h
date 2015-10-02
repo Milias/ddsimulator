@@ -32,6 +32,12 @@ public:
 
   UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere, Category = Map)
   bool Transitable;
+  
+  UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere, Category = Map)
+  bool LineOfSight;
+  
+  UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere, Category = Map)
+  bool LineOfEffect;
 
   AMapTile(const FObjectInitializer & PCIP);
 
@@ -52,4 +58,6 @@ public:
   void ServerAssignEntity(AMapBasicEntity* Entity);
 
   void DoAssignEntity(AMapBasicEntity* Entity);
+
+  bool operator==(const AMapTile& t) { return Index == t.Index; }
 };
